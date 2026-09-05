@@ -1,5 +1,5 @@
 package exception;
 
-public class AuthenticationException {
+public class AuthenticationException extends Exception {
     
 }
