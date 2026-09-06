@@ -19,9 +19,10 @@ lib/       External JAR dependencies
 ## Database Setup
 
 1. Start a local MySQL server.
-2. Run the SQL script in `sql/database.sql`.
-3. Update the connection URL, username, and password in
+2. Update the connection URL, username, and password in
 	`src/database/DatabaseConnection.java`.
+3. Call `new DatabaseInitializer().executeSqlScript()` from Java to create
+	the database and tables from `sql/database.sql`.
 
 The current connection settings use placeholders and connect to the MySQL
 server at `localhost:3306`.

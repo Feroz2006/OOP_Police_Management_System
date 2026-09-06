@@ -1,12 +1,12 @@
 package database;
 
 import java.sql.*;
-import exception.FatalDBException;
+import exception.DatabaseException;
 
 /**
  * Singleton class for managing the database connection.
  */
-public class DatabaseConnection {
+public class DatabaseConnection implements AutoCloseable {
     static private DatabaseConnection instance;
     private Connection connection;
 
@@ -20,9 +20,9 @@ public class DatabaseConnection {
             Class.forName("com.mysql.cj.jdbc.Driver");
             connection = DriverManager.getConnection(DATABASE_URL, DATABASE_USERNAME, DATABASE_PASSWORD);
         } catch (ClassNotFoundException e) {
-            throw new FatalDBException(e);
+            throw new DatabaseException("Java SQL driver not found.", e);
         } catch (SQLException e) {
-            throw new FatalDBException(e);
+            throw new DatabaseException("Unable to connect to the database.", e);
         }
     }
 
@@ -56,10 +56,13 @@ public class DatabaseConnection {
             try {
                 connection.close();
             } catch (SQLException e) {
-                throw new FatalDBException(e); // idk what could be done in this situation, so just throw a fatal
-                                               // exception and exit the program
+                throw new DatabaseException("Unable to close the database connection.", e);
             }
         }
+    }
+
+    public void close() {
+        closeConnection();
     }
 
     /**
@@ -71,8 +74,7 @@ public class DatabaseConnection {
         try {
             return connection != null && !connection.isClosed();
         } catch (SQLException e) {
-            throw new FatalDBException(e); // idk why isClosed() throws SQLException, but it does, so we need to handle
-                                           // it
+            throw new DatabaseException("Unable to check the database connection.", e);
         }
     }
 }

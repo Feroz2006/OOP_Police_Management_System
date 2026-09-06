@@ -1,7 +1,15 @@
 package database;
 
-import java.sql.*;
-import exception.FatalDBException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import exception.DatabaseException;
 
 public class DatabaseInitializer {
     DatabaseConnection dbConnectionClass;
@@ -14,59 +22,57 @@ public class DatabaseInitializer {
         dbConnection = dbConnectionClass.getConnection();
     }
 
-    /**
-     * Initializes the database by creating the PoliceDB database and using it.
-     */
     public void initializeDatabase() {
-        if (!dbConnectionClass.isConnected())
-            throw new FatalDBException(new SQLException("Database connection is not established."));
-
-        try (Statement stmt = dbConnection.createStatement()) {
-            // Create PoliceDB database if it doesn't exist
-            stmt.executeUpdate("CREATE DATABASE IF NOT EXISTS " + DATABASE_NAME);
-            stmt.executeUpdate("USE " + DATABASE_NAME);
-        } catch (SQLException e) {
-            throw new FatalDBException(e);
-        }
+        executeSqlScript();
     }
 
-    /**
-     * Creates the necessary tables in the database.
-     */
     public void createTables() {
-        if (!dbConnectionClass.isConnected())
-            throw new FatalDBException(new SQLException("Database connection is not established."));
+        executeSqlScript();
+    }
 
-        try (Statement stmt = dbConnection.createStatement()) {
+    private void executeSqlScript() {
+        if (!dbConnectionClass.isConnected()) {
+            throw new DatabaseException("Database connection is not established.",
+                    new SQLException("Database connection is not established."));
+        }
 
-            /*
-             * Create tables as necessary.
-             */
+        executeSqlScript(Paths.get("sql", "database_init.sql"));
+    }
 
+    private void executeSqlScript(Path scriptPath) {
+        try {
+            String script = new String(Files.readAllBytes(scriptPath), StandardCharsets.UTF_8);
+            try (Statement statement = dbConnection.createStatement()) {
+                for (String command : script.split(";")) {
+                    String trimmedCommand = command.trim();
+                    if (!trimmedCommand.isEmpty()) {
+                        statement.execute(trimmedCommand);
+                    }
+                }
+            }
         } catch (SQLException e) {
-            throw new FatalDBException(e);
+            throw new DatabaseException("Unable to execute SQL script: " + scriptPath, e);
+        } catch (java.io.IOException e) {
+            throw new DatabaseException("Error reading SQL script file: " + scriptPath, e);
         }
     }
 
-    /**
-     * Drops the necessary tables in the database for resetting the database. This
-     * method should be used with caution, as it will remove all data in the
-     * specified tables.
-     * Also closes the database connection after dropping the tables.
-     */
     public void dropTables() {
-        if (!dbConnectionClass.isConnected())
-            throw new FatalDBException(new SQLException("Database connection is not established."));
-
-        try (Statement stmt = dbConnection.createStatement()) {
-
-            /*
-             * Drop tables as necessary.
-             */
-
-            dbConnectionClass.closeConnection();
-        } catch (SQLException e) {
-            throw new FatalDBException(e);
+        if (!dbConnectionClass.isConnected()) {
+            throw new DatabaseException("Database connection is not established.",
+                    new SQLException("Database connection is not established."));
         }
+
+        try (Statement statement = dbConnection.createStatement();
+             ResultSet resultSet = statement.executeQuery("SELECT DATABASE()")) {
+            if (!resultSet.next() || !DATABASE_NAME.equals(resultSet.getString(1))) {
+                return;
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Unable to check the active database.", e);
+        }
+
+        executeSqlScript(Paths.get("sql", "database_drop.sql"));
+        dbConnectionClass.closeConnection();
     }
 }
