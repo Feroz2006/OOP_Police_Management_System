@@ -7,7 +7,7 @@ import model.Person;
 import controller.LoginController;
 import exception.AuthenticationException;
 
-public class LoginFrame extends JFrame implements FrameInterface {
+public class LoginFrame extends JFrame implements UI_Interface {
 
     private JTextField userField; // To accept username
     private JLabel userLabel;
@@ -32,6 +32,7 @@ public class LoginFrame extends JFrame implements FrameInterface {
         // Prevents user from resizing the window
         setResizable(false);
 
+        // Interface methods
         initializeComponents();
         initializeListeners();
         initializeLayout();
@@ -66,14 +67,20 @@ public class LoginFrame extends JFrame implements FrameInterface {
     }
 
     private void login() {
+        // disable login button to prevent it from being spammed
         loginButton.setEnabled(false);
         String username = userField.getText();
         // getPassword() returns character array
         String password = new String(passField.getPassword());
 
         try {
+            // login should be a static method
             Person user = LoginController.login(username, password);
+
+            // dispose deletes the Frame
             dispose();
+            
+            // Switch to HomeFrame with user details
             HomeFrame homeFrame = new HomeFrame(user);
             homeFrame.setVisible(true);
         } catch (AuthenticationException e) {
@@ -85,6 +92,7 @@ public class LoginFrame extends JFrame implements FrameInterface {
         }
     }
 
+    // Reset login screen
     private void clearFields() {
         userField.setText("");
         passField.setText("");

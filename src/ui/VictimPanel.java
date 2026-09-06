@@ -1,5 +1,7 @@
 package ui;
 
-public class VictimPanel {
+import javax.swing.*;
+
+public class VictimPanel extends JPanel {
     
 }

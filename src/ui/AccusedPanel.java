@@ -1,5 +1,7 @@
 package ui;
 
-public class AccusedPanel {
+import javax.swing.*;
+
+public class AccusedPanel extends JPanel {
     
 }
