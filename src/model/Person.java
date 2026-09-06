@@ -7,44 +7,57 @@ public abstract class Person {
     private String phone;
     private String username;
     private String password;
-    public Person(String personID,String name,int age,String phone,String username,String password){
-        this.personID=personID;
-        this.name=name;
-        this.age=age;
-        this.phone=phone;
-        this.username=username;
-        this.password=password;
+
+    public Person(String personID, String name, int age, String phone, String username, String password) {
+        this.personID = personID;
+        this.name = name;
+        this.age = age;
+        this.phone = phone;
+        this.username = username;
+        this.password = password;
     }
+
     public abstract void viewCase(String caseID);
-    public String getPersonID(){
+
+    public String getPersonID() {
         return personID;
     }
-    public String getName(){
+
+    public String getName() {
         return name;
     }
-    public int getAge(){
+
+    public int getAge() {
         return age;
     }
-    public String getPhone(){
+
+    public String getPhone() {
         return phone;
     }
-    public String getUsername(){
+
+    public String getUsername() {
         return username;
     }
-    public String getPassword(){
+
+    public String getPassword() {
         return password;
     }
-    public void setName(String newname){
-        this.name= newname;
+
+    public void setName(String newname) {
+        this.name = newname;
     }
-    public void setAge(int newage){
-        this.age=newage;
+
+    public void setAge(int newage) {
+        this.age = newage;
     }
-    public void setPhone(String newphone){
-        this.phone=newphone;
+
+    public void setPhone(String newphone) {
+        this.phone = newphone;
     }
-    public boolean validateCredentials(String inputusername,String inputPassword){
-        return inputPassword.equals(password)&&inputusername.equals(username);
+
+    public boolean validateCredentials(String inputusername, String inputPassword) {
+        return inputPassword.equals(password) && inputusername.equals(username);
     }
+
     public abstract String getRole();
 }

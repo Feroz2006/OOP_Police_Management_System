@@ -11,8 +11,8 @@ public class DatabaseConnection {
     private Connection connection;
 
     static final String DATABASE_URL = "jdbc:mysql://localhost:3306/";
-    static final String DATABASE_USERNAME = "username";   // Replace with your database username
-    static final String DATABASE_PASSWORD = "password";   // Replace with your database password
+    static final String DATABASE_USERNAME = "username"; // Replace with your database username
+    static final String DATABASE_PASSWORD = "password"; // Replace with your database password
 
     private DatabaseConnection() {
 
@@ -32,13 +32,13 @@ public class DatabaseConnection {
      * @return the singleton instance
      */
     public static DatabaseConnection getInstance() {
-        
+
         if (instance == null) {
             instance = new DatabaseConnection();
         }
         return instance;
     }
-    
+
     /**
      * Returns the database connection.
      *
@@ -56,7 +56,8 @@ public class DatabaseConnection {
             try {
                 connection.close();
             } catch (SQLException e) {
-                throw new FatalDBException(e);  // idk what could be done in this situation, so just throw a fatal exception and exit the program
+                throw new FatalDBException(e); // idk what could be done in this situation, so just throw a fatal
+                                               // exception and exit the program
             }
         }
     }
@@ -66,11 +67,12 @@ public class DatabaseConnection {
      *
      * @return true if connected, false otherwise
      */
-    public boolean isConnected() { 
+    public boolean isConnected() {
         try {
             return connection != null && !connection.isClosed();
         } catch (SQLException e) {
-            throw new FatalDBException(e);  // idk why isClosed() throws SQLException, but it does, so we need to handle it
+            throw new FatalDBException(e); // idk why isClosed() throws SQLException, but it does, so we need to handle
+                                           // it
         }
     }
 }

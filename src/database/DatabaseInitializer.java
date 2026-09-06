@@ -20,7 +20,7 @@ public class DatabaseInitializer {
     public void initializeDatabase() {
         if (!dbConnectionClass.isConnected())
             throw new FatalDBException(new SQLException("Database connection is not established."));
-        
+
         try (Statement stmt = dbConnection.createStatement()) {
             // Create PoliceDB database if it doesn't exist
             stmt.executeUpdate("CREATE DATABASE IF NOT EXISTS " + DATABASE_NAME);
@@ -36,12 +36,12 @@ public class DatabaseInitializer {
     public void createTables() {
         if (!dbConnectionClass.isConnected())
             throw new FatalDBException(new SQLException("Database connection is not established."));
-        
+
         try (Statement stmt = dbConnection.createStatement()) {
-            
+
             /*
-                Create tables as necessary.
-            */
+             * Create tables as necessary.
+             */
 
         } catch (SQLException e) {
             throw new FatalDBException(e);
@@ -49,7 +49,9 @@ public class DatabaseInitializer {
     }
 
     /**
-     * Drops the necessary tables in the database for resetting the database. This method should be used with caution, as it will remove all data in the specified tables.
+     * Drops the necessary tables in the database for resetting the database. This
+     * method should be used with caution, as it will remove all data in the
+     * specified tables.
      * Also closes the database connection after dropping the tables.
      */
     public void dropTables() {
@@ -57,10 +59,10 @@ public class DatabaseInitializer {
             throw new FatalDBException(new SQLException("Database connection is not established."));
 
         try (Statement stmt = dbConnection.createStatement()) {
-            
+
             /*
-                Drop tables as necessary.
-            */
+             * Drop tables as necessary.
+             */
 
             dbConnectionClass.closeConnection();
         } catch (SQLException e) {
