@@ -4,7 +4,7 @@ Java application for managing police records and database access.
 
 ## Requirements
 
-- JDK 8 or newer
+- JDK 9 or newer
 - MySQL Server
 - MySQL Connector/J
 
@@ -21,8 +21,8 @@ lib/       External JAR dependencies
 1. Start a local MySQL server.
 2. Update the connection URL, username, and password in
 	`src/database/DatabaseConnection.java`.
-3. Call `new DatabaseInitializer().executeSqlScript()` from Java to create
-	the database and tables from `sql/database.sql`.
+3. Call `new DatabaseInitializer().initializeDatabase()` from Java to create
+	the database and tables from `sql/database_init.sql`.
 
 The current connection settings use placeholders and connect to the MySQL
 server at `localhost:3306`.

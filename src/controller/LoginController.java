@@ -5,7 +5,7 @@ import model.Person;
 
 public class LoginController {
     public static Person login(String username, String password) throws AuthenticationException {
-        return new Person();
+        return null;
     }
 
     public static void logout() {
@@ -13,6 +13,6 @@ public class LoginController {
     }
 
     public static Person getCurrentUser() {
-        return new Person();
+        return null;
     }
 }
