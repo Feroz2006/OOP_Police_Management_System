@@ -1,4 +1,4 @@
-package ui;
+package view;
 
 import java.awt.*;
 
@@ -6,7 +6,7 @@ import javax.swing.*;
 
 import model.*;
 
-public class HomeFrame extends JFrame implements UI_Interface {
+public class HomeFrame extends JFrame {
 
     Person currentUser;
     JPanel userInfo;

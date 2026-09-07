@@ -1,13 +1,13 @@
-package ui;
+package view;
 
 import javax.swing.*;
 import java.awt.*;
 
 import model.Person;
 import controller.LoginController;
-import exception.AuthenticationException;
+import exceptions.AuthenticationException;
 
-public class LoginFrame extends JFrame implements UI_Interface {
+public class LoginFrame extends JFrame {
 
     private JTextField userField; // To accept username
     private JLabel userLabel;

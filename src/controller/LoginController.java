@@ -1,17 +1,15 @@
 package controller;
 
-import exception.AuthenticationException;
+import exceptions.AuthenticationException;
 import model.Person;
-import service.AuthenticationService;
-import dao.PersonDAO;
+import model.Police;
 
 public class LoginController {
     private static Person loggedinUser;
-    private static AuthenticationService authService = new AuthenticationService(new PersonDAO());
 
     public static Person login(String username, String password) throws AuthenticationException {
-        loggedinUser = authService.login(username, password);
-        return loggedinUser;
+        loggedinUser = new Police("Placeholder ID", "Placeholder Name", 0, "Placeholder Phone No:", "", "", "Placeholder Rank", "Placeholder Dept.", "Placeholder Badge No:" );
+        return  loggedinUser;
     }
 
     public static void logout() {

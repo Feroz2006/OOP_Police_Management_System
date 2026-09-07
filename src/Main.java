@@ -1,4 +1,4 @@
-import ui.LoginFrame;
+import view.LoginFrame;
 import javax.swing.JFrame;
 
 public class Main {

@@ -135,7 +135,7 @@ Member 5 reviews the prepared SQL used for these operations:
 
 All user-supplied values use prepared-statement parameters. A database or table name cannot use a prepared-statement parameter, so it must pass the strict name check before being included in a database command.
 
-Every statement and result set uses try-with-resources. `DatabaseConnection` owns the connection, and `AppModel.close` closes it once during shutdown. Neither old `DatabaseUtility` file is retained.
+`DatabaseConnection` owns the connection, and `AppModel.close` closes it once during shutdown. The developed `database.DatabaseUtility` is retained for prepared statements and resource closing. The empty duplicate in `util` is removed.
 
 ## 10. Test Database Safety
 
@@ -156,7 +156,7 @@ Member 5 owns:
 - `src/database/DatabaseConnection.java`
 - `src/database/DatabaseInitializer.java`
 - `sql/database_init.sql`
-- Database setup and cleanup helpers in `src/test/AppTest.java`
+- Database setup and verification in `src/test/DBTest.java`
 - Database setup instructions in `README.md`
 
 Member 5 also reviews every JDBC operation in `AppModel`, even though the members responsible for those Model functions write the operations.
@@ -168,7 +168,7 @@ The exact Java function headers are defined in `specifications.md`. This file de
 - Replace the old multi-table initialization script with the two-table schema.
 - Remove dependencies on old record, role-specific, and join tables from the new code.
 - Move all required queries into `AppModel`.
-- Confirm that no code imports either old `DatabaseUtility`.
+- Confirm that no code imports `util.DatabaseUtility` and that database callers use `database.DatabaseUtility` safely.
 - Confirm that every SQL resource closes automatically.
 - Confirm that setup works twice without losing data.
 - Confirm that production and test database names stay separate.

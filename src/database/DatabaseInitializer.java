@@ -9,7 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import exception.DatabaseException;
+import exceptions.DatabaseException;
 
 public class DatabaseInitializer {
     DatabaseConnection dbConnectionClass;

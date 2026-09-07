@@ -1,4 +1,4 @@
-package exception;
+package exceptions;
 
 public class AuthenticationException extends Exception {
     private String attemptedUsername;

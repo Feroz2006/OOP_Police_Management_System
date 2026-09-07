@@ -1,17 +1,15 @@
-# Police Management System — Simplified MVC Plan
+# Police Management System — MVC Refactoring Plan
 
 ## Goal
 
-Refactor the existing project into a small MVC application that every member can understand completely. Reuse useful model, Swing, and database code, but remove unnecessary layers and placeholders.
+Refactor the current project into a small case-management application. Cases are the only managed records.
 
-Cases are the only managed records. The application supports:
+The application supports:
 
 1. Login and logout.
 2. Police creating cases.
-3. Users viewing cases available to their role.
-4. Police updating case descriptions and statuses.
-
-Victims and accused users have read-only access to cases linked to their usernames.
+3. Police viewing and updating cases.
+4. Victims and accused users viewing cases linked to them.
 
 ## Target Structure
 
@@ -26,6 +24,11 @@ src/
 │   ├── UserRole.java
 │   ├── CaseRecord.java
 │   └── AppModel.java
+├── controller/
+│   ├── LoginController.java
+│   ├── PoliceController.java
+│   ├── VictimController.java
+│   └── AccusedController.java
 ├── view/
 │   ├── LoginFrame.java
 │   ├── HomeFrame.java
@@ -33,124 +36,140 @@ src/
 │   ├── VictimPanel.java
 │   ├── AccusedPanel.java
 │   └── CasePanel.java
-├── controller/
-│   └── AppController.java
+├── exceptions/
+│   ├── AuthenticationException.java
+│   ├── AuthorizationException.java
+│   ├── DatabaseException.java
+│   ├── EntityNotFoundException.java
+│   └── ValidationException.java
 ├── database/
 │   ├── DatabaseConnection.java
-│   └── DatabaseInitializer.java
+│   ├── DatabaseInitializer.java
+│   └── DatabaseUtility.java
 └── test/
-    └── AppTest.java
+    ├── UserTest.java
+    ├── DBTest.java
+    └── UITest.java
 
 sql/
 └── database_init.sql
 ```
 
-The production packages are `model`, `view`, `controller`, and `database`. No other production packages or helper interfaces are required.
+The production packages are `model`, `controller`, `view`, `exceptions`, and `database`. The old `dao`, `service`, `ui`, `exception`, and `util` packages are removed after their required code has been moved.
 
-## Design Decisions
+## Package Responsibilities
 
-### Model side
+### Model
 
-- `Person` is the abstract base class for `Police`, `Victim`, and `Accused`.
-- `UserRole` identifies the three roles.
-- `CaseRecord` represents a case in memory. Its values cannot be changed after the object is created.
-- `AppModel` handles login sessions, logout, input checks, permission checks, and case create/read/update operations.
-- The `database` package contains the database support code used by the Model.
+- `Person`, `Police`, `Victim`, and `Accused` represent users.
+- `UserRole` contains the three user roles.
+- `CaseRecord` represents a case in memory.
+- `AppModel` contains login, permission, validation, and case database operations.
+- Database operations do not use separate DAO or service classes.
 
-### View side
+### Controller
 
-- Each Swing class keeps its component, listener, and layout initialization methods private.
-- No common UI interface is used because private methods cannot form an interface contract.
-- `LoginFrame` handles login input.
-- `HomeFrame` hosts the current role panel and logout control.
-- `PolicePanel` contains case create and update controls.
-- `VictimPanel` and `AccusedPanel` contain read-only case access.
-- Every role panel owns an instance of the reusable `CasePanel` class.
-- Views never execute SQL, filter cases, or decide permissions.
+- `LoginController` manages login, logout, and the current user.
+- `PoliceController` connects police case actions to `AppModel`.
+- `VictimController` loads cases linked to the logged-in victim.
+- `AccusedController` loads cases linked to the logged-in accused.
+- Controllers contain coordination code, not SQL or Swing layouts.
+- Controllers return results or pass exceptions to the calling View. They do not display Swing messages.
 
-### Controller side
+### View
 
-- `AppController` connects view events to `AppModel` operations.
-- It keeps the current user, active frame, role panel, and case panel.
-- It runs database work away from the Swing UI thread, then updates Swing components on the UI thread.
-- It owns logout and application shutdown behavior.
-- Members 2 and 4 share this class. Member 2 owns the case create/update handlers. Member 4 owns the remaining controller structure and actions.
+- Existing Swing components, layouts, comments, and useful variable names remain in their corresponding classes.
+- `LoginFrame` collects credentials and displays login results.
+- `HomeFrame` displays user information, contains `personPanel`, and provides logout.
+- `PolicePanel` keeps only case create, view, update, and refresh controls.
+- `VictimPanel` and `AccusedPanel` provide read-only linked-case views.
+- `CasePanel` displays cases in a non-editable table.
+- Views do not execute SQL or decide permissions.
+- Views catch errors from Controller calls and display short, useful messages.
 
-### Database side
+### Exception
 
-- `DatabaseConnection` opens, provides, and closes one JDBC connection.
-- `DatabaseInitializer` creates the selected database, runs the initialization script, and seeds demo users.
-- `database_init.sql` defines only `USERS` and `CASES`.
-- `AppModel` contains the small number of prepared case and authentication queries.
-- No `DatabaseUtility` is retained. Try-with-resources handles statements and result sets more safely and clearly.
+- Existing exception classes provide clear authentication, authorization, validation, missing-record, and database failures.
+- `AppModel` and the database setup convert JDBC failures into `DatabaseException`.
+- Views display short exception messages. Technical database details remain in the exception cause and may be logged during startup or testing.
+
+### Database
+
+- `DatabaseConnection` owns the MySQL connection.
+- `DatabaseConnection` first connects to the MySQL server without selecting a database.
+- `DatabaseInitializer` validates the configured database name, creates the database when absent, selects it, and then runs `database_init.sql`.
+- `DatabaseUtility` prepares statements, binds parameters, and closes JDBC resources.
+- The database contains only `USERS` and `CASES`.
+- Normal startup uses `DB_NAME`, or `PoliceDB` when it is not set. `DBTest` runs separately from the application and explicitly selects only `PoliceDBTest` before running setup.
 
 ## Request Flow
 
 ```text
-View event
-  -> AppController
+Swing View
+  -> matching Controller
   -> AppModel
-  -> DatabaseConnection
+  -> DatabaseUtility / DatabaseConnection
   -> MySQL
-  -> AppController
-  -> active View
+  -> Controller
+  -> Swing View
 ```
 
 ## Permissions
 
 | Action | Police | Victim | Accused |
 |---|---:|---:|---:|
-| Login/logout | Yes | Yes | Yes |
+| Login and logout | Yes | Yes | Yes |
 | View cases | All | Linked only | Linked only |
 | Create cases | Yes | No | No |
-| Update description/status | Yes | No | No |
+| Update case description and status | Yes | No | No |
 
-`AppModel` requires the exact `Person` object returned by the latest successful login and checks that user again in the database. A user class or visible button alone never grants permission.
+Permissions are checked in `AppModel`, even when an operation is called without the Swing interface.
 
 ## Implementation Order
 
-1. Standardize the person hierarchy and role enum.
-2. Implement the case model whose values cannot change after creation.
-3. Reduce the schema to two tables and make initialization configurable.
-4. Implement authentication and case operations in `AppModel`.
-5. Move the reusable Swing files from `ui` to `view` and simplify them.
-6. Members 2 and 4 connect all view actions through `AppController`.
-7. Add isolated model and database tests.
-8. Run the complete acceptance workflow.
-9. Remove old files only after the replacement compiles and passes its tests.
-10. Update the README with setup, environment variables, and demo accounts.
+1. Create the `view` package and move the six retained Swing classes from `ui`.
+2. Update their package declarations and imports together.
+3. Move the five error classes from `exception` to `exceptions` and update imports.
+4. Remove excluded controls and files from the old `ui` package.
+5. Prepare `CaseRecord` and the reduced person classes.
+6. Replace the database schema with `USERS` and `CASES`.
+7. Complete database-name validation, creation, selection, script execution, and test-database selection.
+8. Move authentication and database access into `AppModel`, and convert JDBC failures at its public boundary.
+9. Connect the four existing Controller classes to `AppModel` and their Views.
+10. Make each View action catch Controller errors and show a short message.
+11. Remove `dao`, `service`, and the duplicate utility package after no imports use them.
+12. Update the three existing test classes.
+13. Remove obsolete files only after the retained application compiles and its tests pass.
+14. Update the README and run the complete workflow for all three roles.
 
-## Six-Member Split
+## Six-Member Breakdown
 
-The original responsibility pattern is retained while fitting the reduced, case-only scope.
-
-| Member | Responsibility | Owned files/classes | Shared functions contributed |
+| Member | Main responsibility | Owned classes/files | Shared work |
 |---|---|---|---|
-| 1 | User management and authentication | `Person`, `Police`, `Victim`, `Accused`, `UserRole` | `AppModel.authenticate`, user row mapping, user tests |
-| 2 | Case registration | Creation section of `AppTest`; case-action part of `AppController` | `AppModel.createCase`, creation input checks, `handleCreateCase`, and `handleUpdateCase` |
-| 3 | Case management | `CaseRecord`; shared structure of `AppModel` and `AppTest` | `AppModel.getVisibleCases`, `AppModel.updateCase`, case row mapping |
-| 4 | Case access, input checks, and controller structure | Permission/input-check sections of `AppTest`; main structure of `AppController` | Stored-user checks, role checks, login/dashboard/refresh/logout/shutdown actions, and access tests |
-| 5 | Database and JDBC | `DatabaseConnection`, `DatabaseInitializer`, `database_init.sql` | Test-database setup and review of all SQL in `AppModel` |
-| 6 | Swing views and integration | All six view classes, `Main`, README | View components, layouts, public view methods, startup, and final UI integration |
+| 1 | Users and authentication Model | `Person`, `Police`, `Victim`, `Accused`, `UserRole` | Authentication functions in `AppModel`, `UserTest` |
+| 2 | Police case actions | `PoliceController` | Case creation and update functions in `AppModel`, related tests |
+| 3 | Case Model and reading | `CaseRecord`, shared `AppModel` structure | Visible-case queries and case mapping |
+| 4 | Login and role access Controllers | `LoginController`, `VictimController`, `AccusedController` | Permission checks, logout, access tests |
+| 5 | Database | `DatabaseConnection`, `DatabaseInitializer`, `DatabaseUtility`, `database_init.sql`, `DBTest` | Review all SQL and JDBC resource handling |
+| 6 | Swing and startup | All six View classes, `Main`, `UITest`, README | Final UI connection and acceptance workflow |
 
-`AppModel` and `AppTest` contain work from several members. Member 3 maintains their shared structure; Members 1, 2, and 4 add their assigned logic and tests in that order to reduce merge conflicts. Member 4 implements the shared linked-user role checks, while Member 2 calls them from case creation.
+Member 3 maintains the shared `AppModel` file. Members 1, 2, and 4 add only their assigned functions. Member 2 owns `PoliceController`; Member 4 owns the other three Controller classes. Member 5 reviews SQL written inside `AppModel`.
 
-Member 4 maintains the shared `AppController` file. Member 2 adds its two case-action handlers after the main controller structure is ready. Member 6 supplies the public view methods and checks that the finished Controller connects correctly to the UI. Member 5 reviews all JDBC code.
+Every member must read all production classes and be able to trace login, case creation, case viewing, case updating, and logout.
 
-Ownership is only for coordination. Every member must read all files and trace the complete login, case creation, case viewing, and case update flows.
-
-The exact purpose, variables, constructors, function headers, and expected behavior for every class are defined in `specifications.md`. Each function header states its access level, return type, static or non-static form, parameters, and checked exceptions. The database schema and Member 5's database rules are defined in `database_schema.md`. Members must follow those contracts so independently written parts integrate without renaming or adapter work.
+Exact variables, function headers, and behavior are defined in `specifications.md`. Database table details are defined in `database_schema.md`.
 
 ## Definition of Done
 
-- Only the target structure remains.
-- The application compiles from a clean checkout.
-- Production and test database names are configurable and distinct.
-- Initialization creates only `USERS` and `CASES` and prepares the demo users.
-- Police can create, read, and update cases.
-- Victims and accused can read only linked cases.
-- Unauthorized operations are rejected by `AppModel`.
-- Database work does not freeze the Swing interface.
-- Invalid input and database failures produce readable messages.
-- The JDBC connection closes exactly once when the application exits.
-- Every member can explain all four production packages.
+- Only the target files and packages remain.
+- Existing retained classes compile after their package moves.
+- No production code imports `dao`, `service`, `ui`, `exception`, or `util`.
+- Database setup creates only `USERS` and `CASES`.
+- All three roles can log in and log out.
+- Police can create, view, and update cases.
+- Victims and accused can view only linked cases.
+- Invalid and unauthorized operations produce clear messages.
+- Database failures reach the Views as `DatabaseException`, not `SQLException`.
+- `DBTest` cannot initialize or clean the production database.
+- JDBC statements and result sets are closed safely.
+- Every member can explain each package and complete request flow.

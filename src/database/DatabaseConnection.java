@@ -1,7 +1,7 @@
 package database;
 
 import java.sql.*;
-import exception.DatabaseException;
+import exceptions.DatabaseException;
 
 /**
  * Singleton class for managing the database connection.
