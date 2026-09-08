@@ -32,7 +32,6 @@ public class LoginFrame extends JFrame {
         // Prevents user from resizing the window
         setResizable(false);
 
-        // Interface methods
         initializeComponents();
         initializeListeners();
         initializeLayout();
@@ -81,8 +80,8 @@ public class LoginFrame extends JFrame {
             dispose();
             
             // Switch to HomeFrame with user details
-            HomeFrame homeFrame = new HomeFrame(user);
-            homeFrame.setVisible(true);
+            CaseFrame caseFrame = new CaseFrame(user);
+            caseFrame.setVisible(true);
         } catch (AuthenticationException e) {
             JOptionPane.showMessageDialog(null, "Invalid username or password", "Invalid Credentials", JOptionPane.WARNING_MESSAGE);
         } catch(Exception e) {
