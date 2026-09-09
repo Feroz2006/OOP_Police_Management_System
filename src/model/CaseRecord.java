@@ -3,12 +3,12 @@ package model;
 public class CaseRecord {
      private String caseId;
      private String description;
-     private Status status;
+     private String status;
      private String officerUsername;
      private String victimUsername;
      private String accusedUsername;
      
-     CaseRecord(String caseId, String description, Status status, String officerUsername, String victimUsername, String accusedUsername) {
+     CaseRecord(String caseId, String description, String status, String officerUsername, String victimUsername, String accusedUsername) {
          if (caseId == null || caseId.isBlank()) {
              throw new IllegalArgumentException("Case ID cannot be null or blank");
          }
@@ -39,7 +39,7 @@ public class CaseRecord {
         public String getDescription() {
             return description;
         }
-        public Status getStatus() {
+        public String getStatus() {
             return status;
         }
         public String getOfficerUsername() {
@@ -56,17 +56,11 @@ public class CaseRecord {
             return "CaseRecord{" +
                     "caseId=" + caseId +
                     ", description='" + description + '\'' +
-                    ", status=" + status +
+                    ", status='" + status + '\'' +
                     ", officerUsername='" + officerUsername + '\'' +
                     ", victimUsername='" + victimUsername + '\'' +
                     ", accusedUsername='" + accusedUsername + '\'' +
                     '}';
-        }
-
-        //Status can take 2 of the enumerated values: OPEN or CLOSED
-        public enum Status {
-            OPEN,
-            CLOSED,
         }
 
     }
