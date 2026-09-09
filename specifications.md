@@ -1,279 +1,381 @@
-# Police Management System — MVC Specification
+# Police Management System — Six-Member Specification
 
-## 1. Shared Rules
+## 1. Shared application contract
 
-Cases are the only managed records. Police can create, view, and update cases. Victims and accused users can view only cases linked to their usernames.
+### Active workflow
 
-The active Swing workflow is `Main -> LoginFrame -> CaseFrame -> CasePanel`. `HomeFrame`, `PolicePanel`, `VictimPanel`, and `AccusedPanel` are not part of this workflow. Views pass the logged-in `Person` object explicitly: `LoginFrame` passes it to `CaseFrame`, and `CaseFrame` passes it to each `CasePanel` and to the matching role Controller.
+The current UI workflow is authoritative:
 
-The production packages are `model`, `controller`, `view`, `exceptions`, and `database`. Tests remain in `test`.
+```text
+Main -> LoginFrame -> CaseFrame -> CasePanel
+```
 
-Every table below gives a complete Java function header. A header without `static` is non-static. Constructors do not have a return type. Members must agree before changing a public header used by another package.
+`HomeFrame`, `PolicePanel`, `VictimPanel`, and `AccusedPanel` are legacy views. New work must not depend on them, and they may be removed after the active workflow and tests compile without them.
 
-JDBC helper functions may throw `SQLException`. Controllers will convert database failures to `DatabaseException` when database operations replace the current placeholders. Controllers pass application exceptions to Views. Views catch them and show short messages; Controllers do not use `JOptionPane` or any other Swing component.
+Cases are the only managed records in this workflow:
 
-## 2. Member 1 — User Models and Authentication
+| Action | Police | Victim | Accused |
+|---|---:|---:|---:|
+| Login | Yes | Yes | Yes |
+| View cases | All | Linked only | Linked only |
+| Create cases | Yes | No | No |
+| Update description/status | Yes | No | No |
+
+### Layer responsibilities
+
+| Member | Responsibility |
+|---|---|
+| 1 | All data-model classes |
+| 2 | Police Controller and police backend operations |
+| 3 | Victim Controller and victim case-reading backend |
+| 4 | Login/session Controller and accused case-reading backend |
+| 5 | Database connection, utility, schema, initialization, and DB tests |
+| 6 | `Main` and the active Swing workflow |
+
+Members 2–4 use Member 5’s `DatabaseUtility` for prepared database operations and return Member 1’s model objects to Member 6’s views.
+
+### Required call flow
+
+```text
+LoginFrame.login()
+  -> LoginController.login(username, password)
+  -> DatabaseUtility
+  -> Police / Victim / Accused
+  -> new CaseFrame(user)
+
+CaseFrame.initializeLayout()
+  -> matching role Controller.getCases(concreteUser)
+  -> DatabaseUtility
+  -> List<CaseRecord>
+  -> one CasePanel per CaseRecord
+
+CasePanel Save
+  -> PoliceController.createCase(...)
+     or PoliceController.updateCase(...)
+  -> DatabaseUtility
+```
+
+Controllers contain no Swing code. Views contain no SQL. Model classes contain no Swing or JDBC code. SQL failures are converted to `DatabaseException` before reaching a view.
+
+## 2. Member 1 — Model classes
+
+Member 1 owns every file in `src/model` and the model checks in `UserTest`.
 
 ### Person
 
-`Person` is the abstract base type carried through the complete view workflow. `CaseFrame` uses its runtime subtype to select a Controller, and `CasePanel` uses the object for permissions and display values.
+`Person` is the abstract user object passed from login through `CaseFrame` and `CasePanel`.
 
-| Function header | Required use in the workflow |
+| Function header | Requirement |
 |---|---|
-| `public Person(String personID, String name, int age, String phone, String username, String password)` | Initialize values shared by every user subtype |
-| `public String getPersonID()` | Return the stable user ID |
-| `public String getName()` | Return the displayed name |
+| `public Person(String personID, String name, int age, String phone, String username, String password)` | Store common values |
+| `public String getPersonID()` | Return the stable ID |
+| `public String getName()` | Return the name |
 | `public int getAge()` | Return age |
-| `public String getPhone()` | Return phone number |
-| `public String getUsername()` | Supply the officer name displayed by a new `CasePanel` and the username used to filter cases |
-| `public String getPassword()` | Return the stored classroom password |
-| `public boolean validateCredentials(String inputusername, String inputPassword)` | Check both login values |
-| `public abstract void viewCase(String caseID)` | Perform subtype-specific case viewing behavior |
-| `public abstract String getRole()` | Return the subtype role name |
+| `public String getPhone()` | Return phone |
+| `public String getUsername()` | Return the login and case-link username |
+| `public String getPassword()` | Return the classroom password |
+| `public void setName(String newname)` | Replace the name |
+| `public void setAge(int newage)` | Replace age |
+| `public void setPhone(String newphone)` | Replace phone |
+| `public boolean validateCredentials(String inputusername, String inputPassword)` | Return true only when both values match; return false for null input |
+| `public abstract void viewCase(String caseID)` | Retain role-specific case behavior |
+| `public abstract String getRole()` | Return the matching `UserRole` name |
 
-### User subtypes
+### Police, Victim, and Accused
 
-`LoginController.login(...)` must return one of these concrete types. This is required because `CaseFrame` dispatches with `instanceof`.
+Login must construct one of these concrete types because `CaseFrame` selects a Controller with `instanceof`.
 
-| Class | Required constructor | `getRole()` result |
+| Class | Required constructor | Role result |
 |---|---|---|
 | `Police` | `public Police(String personID, String name, int age, String phone, String username, String password, String rank, String department, String BadgeNumber)` | `UserRole.POLICE.name()` |
 | `Victim` | `public Victim(String personID, String name, int age, String phone, String username, String password, String CrimeDetails, String EmergencyContact)` | `UserRole.VICTIM.name()` |
 | `Accused` | `public Accused(String personID, String name, int age, String phone, String username, String password, String Charges, boolean BailStatus)` | `UserRole.ACCUSED.name()` |
 
-### UserRole
-
-The enum contains `POLICE`, `VICTIM`, and `ACCUSED`.
-
-Member 1 maintains construction, role, credential, and login checks in `UserTest`.
-
-## 3. Members 2, 3, and 4 — Case Model
+Existing subtype getters and setters remain supported. `UserRole` contains `POLICE`, `VICTIM`, and `ACCUSED`.
 
 ### CaseRecord
 
-Purpose: represent one case returned by a role Controller. Each existing record is passed to `new CasePanel(currentUser, caseRecord)`.
+`CaseRecord` is an immutable case returned by Controllers and displayed by `CasePanel`.
 
-| Function header | Purpose |
+| Variable | Type |
 |---|---|
+| `caseId` | `String` |
+| `description` | `String` |
+| `status` | `String` |
+| `officerUsername` | `String` |
+| `victimUsername` | `String` |
+| `accusedUsername` | `String` |
+
+| Function header | Requirement |
+|---|---|
+| `public CaseRecord(String caseId, String description, String status, String officerUsername, String victimUsername, String accusedUsername)` | Validate and store one complete case |
 | `public String getCaseId()` | Return the case ID |
 | `public String getDescription()` | Return the description |
-| `public String getStatus()` | Return the status displayed and passed to `PoliceController.updateCase(...)` |
-| `public String getOfficerUsername()` | Return the police username |
-| `public String getVictimUsername()` | Return the victim username |
-| `public String getAccusedUsername()` | Return the accused username |
+| `public String getStatus()` | Return `OPEN` or `CLOSED` |
+| `public String getOfficerUsername()` | Return the officer username |
+| `public String getVictimUsername()` | Return the linked victim username |
+| `public String getAccusedUsername()` | Return the linked accused username |
 
-The current methods may return placeholder strings until database mapping is implemented. When implemented, the object must store all six values used by `CasePanel`.
+The current constant-returning methods are placeholders. They must read stored fields before database case loading is enabled.
 
-## 4. Members 2 and 4 — Controllers
+### Member 1 completion checks
 
-Controllers return data to Swing classes and do not contain component layout code. Each role-specific `getCases(...)` method receives the same concrete user object held by `CaseFrame`.
+- All concrete users preserve constructor values and return the correct role.
+- Credential checks handle correct, incorrect, blank, and null input.
+- `CaseRecord` preserves all six constructor values.
+- Model classes import neither `database` nor `view`.
 
-### LoginController — Member 4
+## 3. Member 2 — Police Controller and backend
 
-`loggedinUser` is the static Controller session user.
+Member 2 owns `PoliceController` and all police-only case operations.
 
-| Function header | Purpose |
+### Public view-facing functions
+
+| Function header | Requirement |
 |---|---|
-| `public static Person login(String username, String password) throws AuthenticationException` | Authenticate, store, and return a concrete `Police`, `Victim`, or `Accused` object |
-| `public static void logout()` | Clear `loggedinUser` |
-| `public static Person getCurrentUser()` | Return the current user or null |
+| `public static void initialize(DatabaseUtility utility)` | Store Member 5’s initialized database utility |
+| `public static List<CaseRecord> getCases(Police police) throws AuthorizationException, DatabaseException` | Verify the current police session and return every case ordered by case ID |
+| `public static void createCase(String caseId, String description, String victimUsername, String accusedUsername) throws AuthorizationException, ValidationException, DatabaseException` | Obtain the current police from `LoginController`, validate input, and insert an `OPEN` case |
+| `public static void updateCase(Person currentUser, String caseId, String description, String status) throws AuthorizationException, ValidationException, EntityNotFoundException, DatabaseException` | Verify the current police session and update description/status |
 
-### PoliceController — Member 2
+The current empty list and console output are placeholders.
 
-| Function header | Purpose |
+### Required private backend behavior
+
+- Reject calls before `initialize(...)`.
+- Require `LoginController.getCurrentUser()` to be the same authenticated police object supplied by the UI.
+- Trim and reject blank case IDs, descriptions, and linked usernames.
+- Accept only `OPEN` or `CLOSED` status.
+- Check that a new case ID does not already exist.
+- Confirm the victim username exists with role `VICTIM`.
+- Confirm the accused username exists with role `ACCUSED`.
+- Use the authenticated police username as `officer_username`; never trust a text field for it.
+- Throw `EntityNotFoundException` if an update affects no row.
+- Map every selected row to Member 1’s `CaseRecord` constructor.
+- Use prepared parameters for all user input.
+- Close every `ResultSet` and its `PreparedStatement`.
+- Wrap `SQLException` in `DatabaseException` and preserve its cause.
+
+### Member 2 completion checks
+
+- Police receive all cases.
+- Valid creation stores an `OPEN` case with the logged-in officer.
+- Duplicate IDs, invalid links, and blank data are rejected.
+- Only description and status can be updated.
+- Non-police and stale session objects cannot write.
+
+## 4. Member 3 — Victim Controller and backend
+
+Member 3 owns `VictimController` and victim-visible case queries.
+
+| Function header | Requirement |
 |---|---|
-| `public static List<CaseRecord> getCases(Police police)` | Return all cases visible to the supplied police user; currently returns an empty placeholder list |
-| `public static void createCase(String caseId, String description, String victimUsername, String accusedUsername)` | Create an open case from the new-case `CasePanel` fields |
-| `public static void updateCase(Person currentUser, String caseId, String description, String status)` | Update the existing case represented by an editable police `CasePanel` |
+| `public static void initialize(DatabaseUtility utility)` | Store Member 5’s initialized database utility |
+| `public static List<CaseRecord> getCases(Victim victim) throws AuthorizationException, DatabaseException` | Verify the current victim session and return linked cases ordered by case ID |
 
-### VictimController — Member 4
+Required query rule:
 
-| Function header | Purpose |
+```sql
+WHERE victim_username = ?
+ORDER BY case_id
+```
+
+The parameter is `victim.getUsername()`. Member 3 maps all six selected columns to `CaseRecord`, closes JDBC resources, and wraps SQL failures in `DatabaseException`.
+
+### Member 3 completion checks
+
+- A victim receives only rows linked through `victim_username`.
+- Null, police, accused, and stale user objects are rejected.
+- An empty result returns an empty list, never null.
+- Victim backend code exposes no create, update, or delete operation.
+
+## 5. Member 4 — Login, session, and accused backend
+
+Member 4 owns `LoginController`, `AccusedController`, session checks shared with Member 2/3, and the application exception classes.
+
+### LoginController
+
+| Function header | Requirement |
 |---|---|
-| `public static List<CaseRecord> getCases(Victim victim)` | Return cases linked to the supplied victim; currently returns an empty placeholder list |
+| `public static void initialize(DatabaseUtility utility)` | Store Member 5’s initialized database utility |
+| `public static Person login(String username, String password) throws AuthenticationException, DatabaseException` | Authenticate, store, and return the same concrete user object |
+| `public static void logout()` | Clear the stored user |
+| `public static Person getCurrentUser()` | Return the stored user or null |
 
-### AccusedController — Member 4
+`login(...)` must:
 
-| Function header | Purpose |
+1. Reject null or blank credentials with `AuthenticationException`.
+2. Query the user by username with a prepared parameter.
+3. Return the same generic invalid-credentials message for an unknown username or wrong password.
+4. Map `role` to `Police`, `Victim`, or `Accused` using Member 1’s constructors.
+5. Store the returned object in `loggedinUser` only after successful authentication.
+6. Leave `loggedinUser` null after failure.
+
+The current unconditional placeholder `Police` must be removed.
+
+### AccusedController
+
+| Function header | Requirement |
 |---|---|
-| `public static List<CaseRecord> getCases(Accused accused)` | Return cases linked to the supplied accused user; currently returns an empty placeholder list |
+| `public static void initialize(DatabaseUtility utility)` | Store Member 5’s initialized database utility |
+| `public static List<CaseRecord> getCases(Accused accused) throws AuthorizationException, DatabaseException` | Verify the current accused session and return linked cases ordered by case ID |
 
-When persistence is implemented, each `getCases(...)` method must filter with the supplied user's identifying value, normally `getUsername()`. Member 2 tests police Controller actions. Member 4 tests login, logout, and both read-only Controllers.
+Required query rule:
 
-## 5. Member 5 — Database
+```sql
+WHERE accused_username = ?
+ORDER BY case_id
+```
+
+The parameter is `accused.getUsername()`. An empty result returns an empty list, never null.
+
+### Exception contracts
+
+| Exception | Type | Use |
+|---|---|---|
+| `AuthenticationException` | Checked | Invalid credentials; retains attempted username |
+| `AuthorizationException` | Checked | No session, wrong role, or stale user object |
+| `ValidationException` | Runtime | Blank, duplicate, malformed, or invalid input |
+| `EntityNotFoundException` | Runtime | Unknown case ID |
+| `DatabaseException` | Runtime | Connection, SQL, configuration, or resource failure |
+
+### Member 4 completion checks
+
+- Login maps and stores all three concrete roles.
+- Failed login never leaves a previous user authenticated.
+- Logout clears the session.
+- Accused users receive only rows linked through `accused_username`.
+- Session checks are reusable and agreed with Members 2 and 3.
+
+## 6. Member 5 — Database
+
+Member 5 owns `DatabaseConnection`, `DatabaseInitializer`, `DatabaseUtility`, SQL scripts, `database_schema.md`, README database instructions, and `DBTest`.
 
 ### DatabaseConnection
 
-Purpose: retain one shared MySQL connection.
-
-Variables:
-
-| Variable | Type | Purpose |
-|---|---|---|
-| `instance` | `DatabaseConnection`, static | Single connection owner |
-| `connection` | JDBC `Connection` | Active connection |
-| `DATABASE_URL` | `String`, static constant | MySQL server URL |
-| `DATABASE_USERNAME` | `String`, static constant | MySQL username |
-| `DATABASE_PASSWORD` | `String`, static constant | MySQL password |
-
-Functions:
-
-| Function header | Purpose |
+| Function header | Requirement |
 |---|---|
-| `private DatabaseConnection()` | Read configuration and open a server connection without a database name; wrap connection failures in `DatabaseException` |
-| `public static DatabaseConnection getInstance()` | Return the single connection owner |
-| `public Connection getConnection()` | Return the current connection |
-| `public void closeConnection()` | Close the connection when open |
-| `public void close()` | Call `closeConnection` |
-| `public boolean isConnected()` | Return whether the connection is open |
+| `private DatabaseConnection()` | Read configuration and connect to the MySQL server |
+| `public static DatabaseConnection getInstance()` | Return the singleton connection owner |
+| `public Connection getConnection()` | Return the active connection |
+| `public void closeConnection()` | Close the connection and wrap SQL failure |
+| `public void close()` | Delegate to `closeConnection()` |
+| `public boolean isConnected()` | Report connection state and wrap SQL failure |
+
+Configuration comes from `DB_URL`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME`; only `DB_NAME` defaults to `PoliceDB`. Completed code must not contain placeholder credentials.
 
 ### DatabaseInitializer
 
-The default constructor reads `DB_NAME`, using `PoliceDB` when it is absent. The second constructor lets `DBTest` explicitly select `PoliceDBTest` and the script path. Both constructors use the same initialization steps.
-
-Variables:
-
-| Variable | Type | Purpose |
-|---|---|---|
-| `dbConnectionClass` | `DatabaseConnection` | Connection owner |
-| `dbConnection` | `Connection` | Connection used during setup |
-| `DATABASE_NAME` | `String`, final | Database name that this initializer validates and selects |
-| `scriptPath` | `Path`, final | SQL script read by this initializer |
-
-Functions:
-
-| Function header | Purpose |
+| Function header | Requirement |
 |---|---|
-| `public DatabaseInitializer()` | Obtain the server connection, read `DB_NAME`, and use `sql/database_init.sql` |
-| `public DatabaseInitializer(String databaseName, Path scriptPath)` | Obtain the server connection and use the given database and script; mainly used by `DBTest` |
-| `public void initializeDatabase()` | Validate, create, and select the database, then run the initialization script; wrap JDBC failures in `DatabaseException` |
-| `public void createTables()` | Perform the same validation, creation, selection, and safe table setup as `initializeDatabase`; wrap JDBC failures in `DatabaseException` |
-| `private String validateDatabaseName(String databaseName)` | Return a name that begins with a letter and contains only letters, digits, or underscores; otherwise throw `ValidationException` |
-| `private void createDatabase(String databaseName) throws SQLException` | Create the validated database when it does not exist |
-| `private void selectDatabase(String databaseName) throws SQLException` | Select the validated database on the shared connection |
-| `private void executeSqlScript()` | Run the configured script path and wrap SQL or file-reading failures in `DatabaseException` |
-| `private void executeSqlScript(Path scriptPath) throws SQLException, IOException` | Read UTF-8 SQL and execute each simple statement |
+| `public DatabaseInitializer()` | Use the configured production/default database name |
+| `public DatabaseInitializer(String databaseName, Path scriptPath)` | Allow `DBTest` to select `PoliceDBTest` explicitly |
+| `public void initializeDatabase()` | Validate, create, select, and initialize the database safely |
+| `public void createTables()` | Run the same repeatable table setup |
+
+Normal initialization must never drop tables or erase case data. Production startup must not call `dropTables()`.
 
 ### DatabaseUtility
 
-Variables:
-
-| Variable | Type | Purpose |
-|---|---|---|
-| `dbConnection` | `Connection` | Connection used by prepared statements |
-
-Functions:
-
-| Function header | Purpose |
+| Function header | Requirement |
 |---|---|
-| `public DatabaseUtility()` | Obtain the current database connection |
-| `public ResultSet executeQuery(String sql, Object... parameters) throws SQLException` | Run a prepared read query; caller closes the result and its statement |
-| `public int executeUpdate(String sql, Object... parameters) throws SQLException` | Run a prepared change and return the affected-row count |
-| `public void close(AutoCloseable resource) throws SQLException` | Safely close a nullable resource |
-| `private void bindParameters(PreparedStatement statement, Object... parameters) throws SQLException` | Bind parameters in their given order |
+| `public DatabaseUtility()` | Use the shared connection |
+| `public ResultSet executeQuery(String sql, Object... parameters) throws SQLException` | Prepare, bind, and run a read query |
+| `public int executeUpdate(String sql, Object... parameters) throws SQLException` | Prepare, bind, run, and close a write statement |
+| `public void close(AutoCloseable resource) throws SQLException` | Close nullable JDBC resources |
 
-Member 5 ensures change statements close their prepared statements and read callers close both the result and its prepared statement.
+### Target schema
 
-Low-level JDBC helpers, private mapping functions, and direct database-test helpers may declare `SQLException`. `DatabaseInitializer` and the Controller-facing database operations catch JDBC failures and wrap them in `DatabaseException`. The original `SQLException` is kept as the cause for logs and tests.
+The active UI requires only two tables.
 
-### Database schema
+`USERS` contains:
 
-`database_init.sql` creates only `USERS` and `CASES`. Exact columns, constraints, demo accounts, and test safety rules are in `database_schema.md`.
+- `person_id`, `name`, `age`, `phone`, `username`, `password`, and `role`.
+- Nullable police fields: `rank`, `department`, and `badge_number`.
+- Nullable victim fields: `crime_details` and `emergency_contact`.
+- Nullable accused fields: `charges` and `bail_status`.
 
-### DBTest
+`CASES` contains:
 
-`DBTest` contains `private static final String TEST_DATABASE_NAME = "PoliceDBTest"`. It checks this value before setup and uses it for initialization and cleanup. It must stop immediately if the value is different.
+- `case_id`, `description`, and `status` (`OPEN` or `CLOSED`).
+- `officer_username`, `victim_username`, and `accused_username`, each referencing `USERS.username`.
 
-| Function header | Purpose |
-|---|---|
-| `public static void main(String[] args)` | Check that the requested name is exactly `PoliceDBTest`, construct `DatabaseInitializer("PoliceDBTest", scriptPath)`, run checks, clean test rows, and close the connection |
-| `private static void verifyDatabase(Connection connection) throws SQLException` | Confirm that `USERS` and `CASES` exist |
+Both tables use InnoDB and `utf8mb4`. The current FIR, evidence, role-table, and join-table SQL is obsolete for this UI and must be replaced.
 
-Tests never drop the production database.
-`DBTest` runs in its own process while the application is stopped, so the singleton connection cannot already be using the production database.
+### DBTest safety
 
-## 6. Member 6 — Views and Startup
+- Tests use exactly `PoliceDBTest`.
+- Tests abort before setup or cleanup for any other database name.
+- Tests never create, drop, or clean `PoliceDB`.
+- Test rows use a unique prefix and cleanup removes only those rows, cases first.
+- Repeated initialization must preserve existing data.
 
-The active views are `LoginFrame`, `CaseFrame`, and `CasePanel`, all in `view`. The user object is passed explicitly between them.
+The current `DBTest` targets and drops `PoliceDB`; it must not be run against valuable production data until corrected.
 
-### Required workflow
+### Member 5 completion checks
 
-1. `Main` constructs and displays `LoginFrame`.
-2. `LoginFrame.login()` calls `LoginController.login(username, password)`.
-3. A successful login returns a concrete `Police`, `Victim`, or `Accused` as `Person`.
-4. `LoginFrame` constructs `CaseFrame(user)` and displays it.
-5. `CaseFrame.initializeLayout()` calls exactly one role Controller based on the runtime subtype:
-   - `PoliceController.getCases((Police) currentUser)`
-   - `VictimController.getCases((Victim) currentUser)`
-   - `AccusedController.getCases((Accused) currentUser)`
-6. For every returned `CaseRecord`, `CaseFrame` constructs `CasePanel(currentUser, caseRecord)`.
-7. Police can also press Create Case, causing `CaseFrame` to construct one `CasePanel((Police) currentUser)` creation form. Repeated clicks must not create multiple unsaved forms.
-8. A police `CasePanel` calls `PoliceController.createCase(...)` or `PoliceController.updateCase(...)` when Save is pressed. Victim and accused panels are read-only.
+- Setup creates only `USERS` and `CASES` and works repeatedly.
+- Foreign keys and role-compatible demo data are valid.
+- Prepared statements and result sets close safely.
+- Connection and SQL failures become `DatabaseException` at Controller boundaries.
+- `database_schema.md`, SQL, README, and tests describe the same schema.
+
+## 7. Member 6 — UI and startup
+
+Member 6 owns `Main`, `LoginFrame`, `CaseFrame`, `CasePanel`, UI navigation, and `UITest`.
 
 ### LoginFrame
 
-Variables:
-
-| Variable | Type | Purpose |
-|---|---|---|
-| `userField` | `JTextField` | Username input |
-| `userLabel` | `JLabel` | Username label |
-| `passField` | `JPasswordField` | Password input |
-| `passLabel` | `JLabel` | Password label |
-| `loginButton` | `JButton` | Starts login |
-
-Functions:
-
-| Function header | Purpose |
+| Function header | Requirement |
 |---|---|
-| `public LoginFrame()` | Configure the existing login window |
-| `private void initializeComponents()` | Create its current fields |
-| `private void initializeListeners()` | Connect `loginButton` to `login` |
-| `private void initializeLayout()` | Build the current padded grid layout |
-| `private void login()` | Call `LoginController.login`, dispose the login window after success, construct `CaseFrame(user)`, and display it; show authentication or other Controller failures in a dialog |
-| `private void clearFields()` | Clear inputs and enable login |
+| `public LoginFrame()` | Build the login window |
+| `private void initializeComponents()` | Create credential inputs and Login button |
+| `private void initializeListeners()` | Connect Login to `login()` |
+| `private void initializeLayout()` | Build the padded grid |
+| `private void login()` | Call `LoginController.login(...)`, construct `CaseFrame(user)`, then dispose Login and show CaseFrame |
+| `private void clearFields()` | Clear inputs and re-enable Login |
+
+Invalid credentials show the existing warning. Other application errors show a short message. Do not dispose Login until `CaseFrame` is successfully constructed.
 
 ### CaseFrame
 
-| Variable | Type | Purpose |
+| Variable | Type | Requirement |
 |---|---|---|
-| `currentUser` | `Person` | Concrete logged-in user passed by `LoginFrame` |
-| `caseList` | `JPanel` | Vertical container for case cards and an optional creation form |
-| `scrollPane` | `JScrollPane` | Makes the case list scrollable |
-| `createCaseButton` | `JButton` | Adds a creation form for police only |
-| `newCasePanel` | `CasePanel` | Tracks the single unsaved creation form and prevents duplicates |
+| `currentUser` | `Person` | Store the authenticated concrete user |
+| `caseList` | `JPanel` | Vertically contain case cards |
+| `scrollPane` | `JScrollPane` | Scroll the list |
+| `createCaseButton` | `JButton` | Be visible and active only for police |
+| `newCasePanel` | `CasePanel` | Track one unsaved form |
 
-| Function header | Purpose |
+| Function header | Requirement |
 |---|---|
-| `CaseFrame(Person currentUser)` | Store the user and initialize the frame |
-| `private void initializeComponents()` | Create `caseList`, `scrollPane`, and the police-only creation button |
-| `private void initializeListeners()` | Add at most one new-case `CasePanel` when police press Create Case |
-| `private void initializeLayout()` | Call the matching role Controller, add one `CasePanel` per returned `CaseRecord`, and arrange the frame |
+| `CaseFrame(Person currentUser)` | Reject null/unknown user types and build the frame |
+| `private void initializeComponents()` | Create list, scroll pane, and Create button |
+| `private void initializeListeners()` | Add no more than one police creation form |
+| `private void initializeLayout()` | Call exactly one matching role Controller and add one `CasePanel` per returned case |
+| `private void refreshCases()` | Reload cases, rebuild the list, and call `revalidate()`/`repaint()` |
+
+Required dispatch inside case loading:
+
+```java
+PoliceController.getCases((Police) currentUser)
+VictimController.getCases((Victim) currentUser)
+AccusedController.getCases((Accused) currentUser)
+```
+
+Only the matching call executes. Controller exceptions are caught and displayed by the view.
 
 ### CasePanel
 
-`CasePanel` is one case form/card. Its constructor determines whether it represents an existing case or a new police-created case.
-
-| Variable | Type | Purpose |
-|---|---|---|
-| `currentUser` | `Person` | User viewing or editing the card |
-| `readOnly` | `boolean` | True for victims and accused users |
-| `creatingCase` | `boolean` | True for the police creation form |
-| `caseRecord` | `CaseRecord` | Existing record, or null during creation |
-| `id`, `status`, `victimName`, `accusedName` | `JTextField` | Display or collect case values |
-| `officerName` | `JLabel` | Display the officer username |
-| `description` | `JTextArea` | Display or edit the description |
-| `saveButton` | `JButton` | Create or update a case; hidden for read-only users |
-
-| Function header | Purpose |
+| Function header | Requirement |
 |---|---|
-| `CasePanel(Person currentUser, CaseRecord caseRecord)` | Build an existing case card; editable for police and read-only otherwise |
-| `CasePanel(Police currentUser)` | Build a new-case form with status `OPEN` and officer name from `currentUser.getUsername()` |
-| `private void initializeComponents()` | Read existing values through all six `CaseRecord` getters, or create blank inputs for a new case |
-| `private void initializeListeners()` | Hide Save for read-only users; otherwise call the matching police create or update method |
+| `CasePanel(Person currentUser, CaseRecord caseRecord)` | Display an existing case; police can update it |
+| `CasePanel(Police currentUser)` | Display a blank creation form with status `OPEN` |
+| `private void initializeComponents()` | Read all six `CaseRecord` getters or create blank inputs |
+| `private void initializeListeners()` | Call police create/update or enforce read-only access |
 | `private void initializeLayout()` | Arrange the seven label/value rows |
 
-The creation form calls:
+Creation calls:
 
 ```java
 PoliceController.createCase(
@@ -283,7 +385,7 @@ PoliceController.createCase(
     accusedName.getText());
 ```
 
-An editable existing case calls:
+Update calls:
 
 ```java
 PoliceController.updateCase(
@@ -293,62 +395,47 @@ PoliceController.updateCase(
     status.getText());
 ```
 
+Victim and accused panels hide Save and lock status and description. Case ID and linked usernames are never editable after creation. Successful writes refresh `CaseFrame`; successful creation clears `newCasePanel` so a later case can be created.
+
 ### Main
 
-| Function header | Purpose |
-|---|---|
-| `public static void main(String[] args)` | Construct and display `LoginFrame` |
+`public static void main(String[] args)` must:
 
-### UITest
+1. Initialize the database.
+2. Construct one `DatabaseUtility`.
+3. Initialize all four Controllers with that same utility.
+4. Display `LoginFrame` through `SwingUtilities.invokeLater(...)`.
+5. Show one short startup error if initialization fails.
 
-| Function header | Purpose |
-|---|---|
-| `public static void main(String[] args)` | Check the `LoginFrame -> CaseFrame -> CasePanel` workflow and its main controls |
+### Member 6 completion checks
 
-## 7. Exception Classes
+- All three roles follow `LoginFrame -> CaseFrame -> CasePanel`.
+- Police alone see Create and Save controls.
+- Repeated Create clicks do not create multiple unsaved forms.
+- A case list refreshes after successful writes.
+- Views catch Controller failures without exposing SQL details.
+- `UITest` covers dispatch, visibility, editing, and duplicate-form behavior.
 
-The existing exception files move together from `exception` to `exceptions`. Member 4 maintains these shared error types and Member 5 reviews `DatabaseException` use.
+## 8. Integration requirements
 
-`AuthenticationException` and `AuthorizationException` are checked exceptions. `DatabaseException`, `EntityNotFoundException`, and `ValidationException` extend `RuntimeException`; their public headers still list them so each caller's possible failures are clear.
+1. Member 1 completes real model storage before Members 2–4 enable database results.
+2. Member 5 finalizes the schema and safe test database before Controller database tests run.
+3. Members 2–4 agree on session identity checks and `DatabaseUtility` initialization.
+4. Member 6 keeps the current Controller method names and parameters; checked exception declarations may be added.
+5. Shared public headers in this file change only with agreement from their caller and owner.
+6. Each member tests their own layer before full integration.
 
-| Class | Function header | Purpose |
-|---|---|---|
-| `AuthenticationException` | `public AuthenticationException(String message, String attemptedUsername)` | Report failed login and store the attempted username |
-| `AuthenticationException` | `public String getAttemptedUsername()` | Return the attempted username |
-| `AuthorizationException` | `public AuthorizationException(String message)` | Report a denied action |
-| `DatabaseException` | `public DatabaseException(String message)` | Report a database failure |
-| `DatabaseException` | `public DatabaseException(String message, Throwable cause)` | Report a database failure with its cause |
-| `EntityNotFoundException` | `public EntityNotFoundException(String entityName, String id)` | Report a missing record |
-| `ValidationException` | `public ValidationException(String message)` | Report invalid input |
+## 9. Project acceptance criteria
 
-## 8. Integration Order
-
-1. Complete `CaseRecord` storage while keeping all six getter signatures used by `CasePanel`.
-2. Replace the placeholder in `LoginController.login(...)` with authentication that returns the correct concrete user subtype.
-3. Replace the empty lists in all three `getCases(...)` methods with database-backed, role-filtered results.
-4. Implement `PoliceController.createCase(...)` and `PoliceController.updateCase(...)` without changing the view-facing headers.
-5. Make `CasePanel` show short dialogs for Controller validation, authorization, missing-record, and database failures.
-6. Refresh the `CaseFrame` list after a successful create or update and clear `newCasePanel` after creation succeeds.
-7. Update and run `UserTest`, `DBTest`, and `UITest` for the active workflow.
-
-## 9. Acceptance Criteria
-
-- Only the five production packages remain.
-- Existing Swing layouts and useful case controls remain recognizable.
-- No production class imports `dao`, `service`, `ui`, `exception`, or `util`.
-- `LoginFrame` uses `LoginController`; `CaseFrame` uses all three role Controllers; `CasePanel` uses `PoliceController` for writes.
-- Members 2 and 4 own the Controller work assigned above.
-- Database setup creates only `USERS` and `CASES`.
-- Police can create, view, and update cases.
-- Victims and accused can view only linked cases.
-- `LoginController.login(...)` returns a concrete `Police`, `Victim`, or `Accused` object, never a plain or null user on success.
-- `CaseFrame.initializeLayout()` calls exactly one typed `getCases(...)` method and creates one `CasePanel` per returned `CaseRecord`.
-- Repeated Create Case clicks do not add multiple unsaved forms.
-- Victim and accused `CasePanel` instances hide Save and prevent editing.
-- Invalid login, input, permissions, and missing cases use the correct exception class.
-- Views display errors; Controllers contain no Swing message code.
-- JDBC errors leave Controller-facing operations and database setup as `DatabaseException`, not `SQLException`.
-- `CasePanel` extends `JPanel`.
-- `DBTest` rejects every database name except `PoliceDBTest`.
-- JDBC resources close safely.
-- Each member can explain every class and request flow.
+- The active application uses only `LoginFrame -> CaseFrame -> CasePanel`.
+- Login returns the correct concrete user and stores the same session object.
+- Police see every case; victims and accused see only linked cases.
+- Each returned case appears once with all six correct values.
+- Police can create and update cases; other roles cannot mutate them.
+- Repeated Create clicks produce only one unsaved form.
+- Successful writes refresh the list.
+- Models contain no JDBC/Swing code, Controllers contain no Swing code, and Views contain no SQL.
+- SQL uses prepared parameters and JDBC resources close safely.
+- Backend failures use the defined application exceptions.
+- `DBTest` cannot affect `PoliceDB`.
+- All Java sources compile and `UserTest`, `DBTest`, and `UITest` pass.

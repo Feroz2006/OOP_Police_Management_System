@@ -9,16 +9,18 @@ public class PoliceController {
         return List.of();
     }
 
-    public static void createCase(String caseId, String description, String victimUsername, String accusedUsername) {
+    public static CaseRecord createCase(String caseId, String description, String victimUsername, String accusedUsername) {
         System.out.println("Case ID: " + caseId);
         System.out.println("Description: " + description);
         System.out.println("Victim Username: " + victimUsername);
         System.out.println("Accused Username: " + accusedUsername);
+        return new CaseRecord();
     }
 
-    public static void updateCase(Person currentUser, String caseId, String description, String status) {
+    public static CaseRecord updateCase(Person currentUser, String caseId, String description, String status) {
         System.out.println("Case ID: " + caseId);
         System.out.println("Description: " + description);
         System.out.println("Status: " + status);
+        return new CaseRecord();
     }
 }

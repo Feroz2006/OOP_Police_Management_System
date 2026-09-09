@@ -44,12 +44,17 @@ public class CaseFrame extends JFrame {
     private void initializeListeners() {
         if (currentUser instanceof Police) {
             createCaseButton.addActionListener(e -> {
-                if (newCasePanel != null)
+                // if a new case is already being created, do nothing
+                if (newCasePanel != null && newCasePanel.creatingCase)
                     return;
 
                 newCasePanel = new CasePanel((Police) currentUser);
                 caseList.add(newCasePanel);
+
+                // Revalidate recalculates the Layout if components have changes size, position or layout
                 caseList.revalidate();
+
+                // Draws the components again on the screen
                 caseList.repaint();
             });
         }

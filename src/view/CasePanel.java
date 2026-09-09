@@ -34,11 +34,27 @@ public class CasePanel extends JPanel {
         else
             this.readOnly = true;
 
+
+        updateUIState();
+    }
+
+    private void updateUIState() {
+        // Remove all components if any were added
+        this.removeAll();
+
+        // Create components, add them, set layout and listeners
         initializeComponents();
         initializeListeners();
         initializeLayout();
+
+        // Revalidate recalculates the Layout if components have changes size, position or layout
+        this.revalidate();
+
+        // Draws the components again on the screen
+        this.repaint();
     }
 
+    // This constructor is called to Create new CaseRecords in the UI
     CasePanel(Police currentUser) {
         super();
         this.currentUser = currentUser;
@@ -46,59 +62,61 @@ public class CasePanel extends JPanel {
         this.creatingCase = true;
         this.readOnly = false;
 
-        initializeComponents();
-        initializeListeners();
-        initializeLayout();
+        updateUIState();
     }
 
     private void initializeComponents() {
-        saveButton = new JButton("Save");
+        // Default values to be displayed when creating a new case
+        String idText = "";
+        String statusText = "OPEN";
+        String officerText = currentUser.getUsername();
+        String victimText = "";
+        String accusedText = "";
+        String descriptionText = "";
 
-        if (creatingCase) {
-            id = new JTextField();
-            status = new JTextField("OPEN");
-            officerName = new JLabel(currentUser.getUsername(), SwingConstants.LEFT);
-            victimName = new JTextField();
-            accusedName = new JTextField();
-            description = new JTextArea();
-            status.setEditable(false);
-            return;
+        // Changing default values if cases are to be viewed not created
+        if (!creatingCase) {
+            idText = caseRecord.getCaseId();
+            statusText = caseRecord.getStatus();
+            officerText = caseRecord.getOfficerUsername();
+            victimText = caseRecord.getVictimUsername();
+            accusedText = caseRecord.getAccusedUsername();
+            descriptionText = caseRecord.getDescription();
         }
 
-        id = new JTextField(caseRecord.getCaseId());
-        status = new JTextField(caseRecord.getStatus());
-        officerName = new JLabel(caseRecord.getOfficerUsername(), SwingConstants.LEFT);
-        victimName = new JTextField(caseRecord.getVictimUsername());
-        accusedName = new JTextField(caseRecord.getAccusedUsername());
-        description = new JTextArea(caseRecord.getDescription());
-        id.setEditable(false);
-        victimName.setEditable(false);
-        accusedName.setEditable(false);
+        // Initializing Components
+        saveButton = new JButton("Save");
+        id = new JTextField(idText);
+        status = new JTextField(statusText);
+        officerName = new JLabel(officerText, SwingConstants.LEFT);
+        victimName = new JTextField(victimText);
+        accusedName = new JTextField(accusedText);
+        description = new JTextArea(descriptionText);
 
+        // Moves overflowing text to the next line
+        description.setLineWrap(true);
+
+        // Setting Editable state
+        id.setEditable(creatingCase);
+        status.setEditable(!(creatingCase || readOnly));
+        victimName.setEditable(creatingCase);
+        accusedName.setEditable(creatingCase);
     }
 
     private void initializeListeners() {
         if (readOnly) {
-            saveButton.setVisible(false);
+            saveButton.setEnabled(false);
             status.setEditable(false);
             description.setEditable(false);
             return;
         }
 
         if (creatingCase) {
-            saveButton.addActionListener(e -> PoliceController.createCase(
-                    id.getText(),
-                    description.getText(),
-                    victimName.getText(),
-                    accusedName.getText()));
+            saveButton.addActionListener(e -> createCase());
             return;
         }
 
-        saveButton.addActionListener(e -> PoliceController.updateCase(
-                currentUser,
-                caseRecord.getCaseId(),
-                description.getText(),
-                status.getText()));
+        saveButton.addActionListener(e -> updateCase());
     }
 
     private void initializeLayout() {
@@ -118,5 +136,16 @@ public class CasePanel extends JPanel {
         add(description);
         add(new JLabel());
         add(saveButton);
+    }
+
+    private void createCase() {
+        this.caseRecord = PoliceController.createCase(id.getText(), description.getText(), victimName.getText(), accusedName.getText());
+        this.creatingCase = false;
+        updateUIState();
+    }
+
+    private void updateCase() {
+        this.caseRecord = PoliceController.updateCase(currentUser, caseRecord.getCaseId(), description.getText(), status.getText());
+        updateUIState();
     }
 }
