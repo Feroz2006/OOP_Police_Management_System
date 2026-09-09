@@ -322,7 +322,7 @@ The current `DBTest` targets and drops `PoliceDB`; it must not be run against va
 
 ## 7. Member 6 — UI and startup
 
-Member 6 owns `Main`, `LoginFrame`, `CaseFrame`, `CasePanel`, UI navigation, and `UITest`.
+Member 6 owns `Main`, `LoginFrame`, `CaseFrame`, `CasePanel`, UI navigation, and manual UI verification.
 
 ### LoginFrame
 
@@ -414,7 +414,7 @@ Victim and accused panels hide Save and lock status and description. Case ID and
 - Repeated Create clicks do not create multiple unsaved forms.
 - A case list refreshes after successful writes.
 - Views catch Controller failures without exposing SQL details.
-- `UITest` covers dispatch, visibility, editing, and duplicate-form behavior.
+- A manual checklist covers dispatch, visibility, editing, refresh, error dialogs, and duplicate-form behavior.
 
 ## 8. Integration requirements
 
@@ -438,4 +438,4 @@ Victim and accused panels hide Save and lock status and description. Case ID and
 - SQL uses prepared parameters and JDBC resources close safely.
 - Backend failures use the defined application exceptions.
 - `DBTest` cannot affect `PoliceDB`.
-- All Java sources compile and `UserTest`, `DBTest`, and `UITest` pass.
+- All Java sources compile, `UserTest` and `DBTest` pass, and the manual UI checklist passes.

@@ -19,7 +19,7 @@ Police can view, create, and update cases. Victims and accused users can view on
 | 3 | Victim Controller/backend | `VictimController` and victim visibility tests |
 | 4 | Login/session and accused Controller/backend | `LoginController`, `AccusedController`, exceptions, authentication/access tests |
 | 5 | Database | `src/database`, SQL, `database_schema.md`, database README content, `DBTest` |
-| 6 | UI/startup | `Main`, `LoginFrame`, `CaseFrame`, `CasePanel`, `UITest` |
+| 6 | UI/startup | `Main`, `LoginFrame`, `CaseFrame`, `CasePanel`, and manual UI verification |
 
 Members 2–4 call Member 5’s `DatabaseUtility` and return Member 1’s objects to Member 6’s UI.
 
@@ -56,8 +56,7 @@ src/
 │   └── CasePanel.java
 └── test/
     ├── UserTest.java
-    ├── DBTest.java
-    └── UITest.java
+    └── DBTest.java
 
 sql/
 └── database_init.sql
@@ -86,7 +85,7 @@ Incomplete backend:
 - The SQL schema contains unused FIR/evidence functionality.
 - `Main` does not initialize the database/backend.
 - UI writes do not refresh case cards or display specific backend failures.
-- `UserTest` and `UITest` are empty.
+- `UserTest` is empty, and the UI workflow still needs a manual acceptance checklist.
 - `DBTest` currently targets and drops `PoliceDB`, so it is unsafe for valuable data.
 
 ## Phase 1 — Member 1 models
@@ -178,7 +177,7 @@ Exit condition: police writes are validated, authorized, persisted, and testable
 6. Refresh after successful create/update.
 7. Clear `newCasePanel` after a successful creation.
 8. Keep victim/accused fields locked and Save hidden.
-9. Test all role paths and repeated Create clicks.
+9. Manually verify all role paths and repeated Create clicks.
 10. Remove legacy dashboard views after references disappear.
 
 Exit condition: all allowed actions work through the current three-view workflow.
@@ -188,8 +187,8 @@ Exit condition: all allowed actions work through the current three-view workflow
 1. Compile all Java sources with Connector/J.
 2. Run model tests without MySQL.
 3. Run database tests only against `PoliceDBTest`.
-4. Test login and case visibility for every role.
-5. Test valid and invalid police writes.
+4. Manually verify login and case visibility for every role.
+5. Manually verify valid and invalid police writes in the UI.
 6. Confirm views contain no SQL and Controllers contain no Swing code.
 7. Confirm all JDBC resources close.
 8. Confirm user-facing messages do not expose SQL details.
@@ -215,4 +214,4 @@ Exit condition: all allowed actions work through the current three-view workflow
 - Database setup is repeatable and tests cannot affect `PoliceDB`.
 - Models contain no JDBC/Swing code, Controllers contain no Swing code, and Views contain no SQL.
 - Application exceptions cross layer boundaries instead of raw SQL failures.
-- All Java sources compile and all three test programs pass.
+- All Java sources compile, `UserTest` and `DBTest` pass, and the manual UI checklist passes.
