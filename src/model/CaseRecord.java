@@ -1,27 +1,73 @@
 package model;
 
 public class CaseRecord {
-    public String getCaseId() {
-        return "Placeholder Case ID";
+     private String caseId;
+     private String description;
+     private Status status;
+     private String officerUsername;
+     private String victimUsername;
+     private String accusedUsername;
+     
+     CaseRecord(String caseId, String description, Status status, String officerUsername, String victimUsername, String accusedUsername) {
+         if (caseId == null || caseId.isBlank()) {
+             throw new IllegalArgumentException("Case ID cannot be null or blank");
+         }
+            if (description == null || description.isBlank()) {
+                throw new IllegalArgumentException("Description cannot be null or blank");
+            }
+            if (officerUsername == null || officerUsername.isBlank()) {
+                throw new IllegalArgumentException("Officer username cannot be null or blank");
+            }
+            if (victimUsername == null || victimUsername.isBlank()) {
+                throw new IllegalArgumentException("Victim username cannot be null or blank");
+            }
+            if (accusedUsername == null || accusedUsername.isBlank()) {
+                throw new IllegalArgumentException("Accused username cannot be null or blank");
+            }
+
+        this.caseId = caseId;
+         this.description = description;
+         this.status = status;
+         this.officerUsername = officerUsername;
+         this.victimUsername = victimUsername;
+         this.accusedUsername = accusedUsername;
+     }
+
+        public String getCaseId() {
+            return caseId;
+        }
+        public String getDescription() {
+            return description;
+        }
+        public Status getStatus() {
+            return status;
+        }
+        public String getOfficerUsername() {
+            return officerUsername;
+        }
+        public String getVictimUsername() {
+            return victimUsername;
+        }
+        public String getAccusedUsername() {
+            return accusedUsername;
+        }
+
+        public String toString() {
+            return "CaseRecord{" +
+                    "caseId=" + caseId +
+                    ", description='" + description + '\'' +
+                    ", status=" + status +
+                    ", officerUsername='" + officerUsername + '\'' +
+                    ", victimUsername='" + victimUsername + '\'' +
+                    ", accusedUsername='" + accusedUsername + '\'' +
+                    '}';
+        }
+
+        //Status can take 2 of the enumerated values: OPEN or CLOSED
+        public enum Status {
+            OPEN,
+            CLOSED,
+        }
+
     }
 
-    public String getStatus() {
-        return "Placeholder Status";
-    }
-
-    public String getOfficerUsername() {
-        return "Placeholder Officer Username";
-    }
-
-    public String getVictimUsername() {
-        return "Placeholder Victim Username";
-    }
-
-    public String getAccusedUsername() {
-        return "Placeholder Accused Username";
-    }
-
-    public String getDescription() {
-        return "Placeholder Case Description";
-    }
-}
