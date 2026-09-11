@@ -1,5 +1,6 @@
 package view;
 
+import java.awt.Container;
 import java.awt.GridLayout;
 
 import javax.swing.*;
@@ -22,6 +23,7 @@ public class CasePanel extends JPanel {
     JTextField victimName;
     JTextField accusedName;
     JButton saveButton;
+    JButton deleteButton;
 
     CasePanel(CaseRecord caseRecord) {
         super();
@@ -86,6 +88,7 @@ public class CasePanel extends JPanel {
 
         // Initializing Components
         saveButton = new JButton("Save");
+        deleteButton = new JButton("Delete");
         id = new JTextField(idText);
         status = new JTextField(statusText);
         officerName = new JLabel(officerText, SwingConstants.LEFT);
@@ -106,6 +109,7 @@ public class CasePanel extends JPanel {
     private void initializeListeners() {
         if (readOnly) {
             saveButton.setEnabled(false);
+            deleteButton.setEnabled(false);
             status.setEditable(false);
             description.setEditable(false);
             return;
@@ -113,10 +117,12 @@ public class CasePanel extends JPanel {
 
         if (creatingCase) {
             saveButton.addActionListener(e -> createCase());
+            deleteButton.setEnabled(false);
             return;
         }
 
         saveButton.addActionListener(e -> updateCase());
+        deleteButton.addActionListener(e -> deleteCase());
     }
 
     private void initializeLayout() {
@@ -134,8 +140,8 @@ public class CasePanel extends JPanel {
         add(accusedName);
         add(new JLabel("Description:"));
         add(description);
-        add(new JLabel());
         add(saveButton);
+        add(deleteButton);
     }
 
     private void createCase() {
@@ -147,5 +153,15 @@ public class CasePanel extends JPanel {
     private void updateCase() {
         this.caseRecord = PoliceController.updateCase(this.caseRecord, description.getText(), status.getText());
         updateUIState();
+    }
+
+    private void deleteCase() {
+        PoliceController.deleteCase(this.caseRecord);
+
+        // Removing this Component from its Container
+        Container parent = getParent();
+        parent.remove(this);
+        parent.revalidate();
+        parent.repaint();
     }
 }

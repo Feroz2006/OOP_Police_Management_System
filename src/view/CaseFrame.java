@@ -13,6 +13,7 @@ public class CaseFrame extends JFrame {
     JPanel caseList;
     JScrollPane scrollPane;
     JButton createCaseButton;
+    JButton logoutButton;
     CasePanel newCasePanel;
 
     CaseFrame() {
@@ -26,44 +27,61 @@ public class CaseFrame extends JFrame {
         // Prevents user from resizing the window
         setResizable(false);
 
-
         initializeComponents();
         initializeListeners();
         initializeLayout();
     }
 
-    private void initializeComponents () {
+    private void initializeComponents() {
         caseList = new JPanel();
         caseList.setLayout(new BoxLayout(caseList, BoxLayout.Y_AXIS));
         scrollPane = new JScrollPane(caseList);
         createCaseButton = new JButton("Create Case");
+        logoutButton = new JButton("Logout");
+        
         // Create case visible only if user is Police Officer
         createCaseButton.setVisible(currentUser instanceof Police);
     }
 
     private void initializeListeners() {
+        logoutButton.addActionListener(e -> logout());
         if (currentUser instanceof Police) {
-            createCaseButton.addActionListener(e -> {
-                // if a new case is already being created, do nothing
-                if (newCasePanel != null && newCasePanel.creatingCase)
-                    return;
-
-                newCasePanel = new CasePanel();
-                caseList.add(newCasePanel);
-
-                // Revalidate recalculates the Layout if components have changes size, position or layout
-                caseList.revalidate();
-
-                // Draws the components again on the screen
-                caseList.repaint();
-            });
+            createCaseButton.addActionListener(e -> createCase());
         }
+    }
+
+    private void logout() {
+        LoginController.logout();
+
+        JFrame loginFrame = new LoginFrame();
+        loginFrame.setVisible(true); // Makes window visible
+
+        dispose();
+
+    }
+
+    private void createCase() {
+
+        // if a new case is already being created, do nothing
+        if (newCasePanel != null && newCasePanel.creatingCase)
+            return;
+
+        newCasePanel = new CasePanel();
+        caseList.add(newCasePanel);
+
+        // Revalidate recalculates the Layout if components have changes size, position
+        // or layout
+        caseList.revalidate();
+
+        // Draws the components again on the screen
+        caseList.repaint();
+
     }
 
     private void initializeLayout() {
         setLayout(new BorderLayout(5, 5));
         List<CaseRecord> cases = List.of();
-
+        add(logoutButton, BorderLayout.SOUTH);
         if (currentUser instanceof Police) {
             cases = PoliceController.getCases((Police) currentUser);
             add(createCaseButton, BorderLayout.NORTH);

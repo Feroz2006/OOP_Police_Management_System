@@ -15,6 +15,8 @@ public class PoliceController {
         System.out.println("Description: " + description);
         System.out.println("Victim Username: " + victimUsername);
         System.out.println("Accused Username: " + accusedUsername);
+
+        // App Model Call here to create a new record in the database
         return new CaseRecord(caseId, description, "OPEN", officerUsername, victimUsername, accusedUsername);
     }
 
@@ -22,6 +24,14 @@ public class PoliceController {
         System.out.println("Case ID: " + oldRecord.getCaseId());
         System.out.println("Description: " + description);
         System.out.println("Status: " + status);
+
+        // App Model Call here to update the record in the database
+
         return new CaseRecord(oldRecord.getCaseId(), description, status, oldRecord.getOfficerUsername(), oldRecord.getVictimUsername(), oldRecord.getAccusedUsername());
+    }
+
+    public static void deleteCase(CaseRecord record) {
+        // App Model Call here to delete the record from the database
+
     }
 }
