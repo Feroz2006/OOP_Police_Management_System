@@ -75,26 +75,17 @@ public class LoginFrame extends JFrame {
         try {
             // login should be a static method
             Person user = LoginController.login(username, password);
-
-            // dispose deletes the Frame
-            dispose();
             
             // Switch to HomeFrame with user details
             CaseFrame caseFrame = new CaseFrame(user);
             caseFrame.setVisible(true);
+            
+            // dispose deletes the Frame
+            dispose();
         } catch (AuthenticationException e) {
             JOptionPane.showMessageDialog(null, "Invalid username or password", "Invalid Credentials", JOptionPane.WARNING_MESSAGE);
         } catch(Exception e) {
             JOptionPane.showMessageDialog(null, e.getMessage(), "Error", JOptionPane.WARNING_MESSAGE);
-        } finally {
-            clearFields();
         }
-    }
-
-    // Reset login screen
-    private void clearFields() {
-        userField.setText("");
-        passField.setText("");
-        loginButton.setEnabled(true);
     }
 }

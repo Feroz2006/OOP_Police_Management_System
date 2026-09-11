@@ -62,7 +62,7 @@ sql/
 └── database_init.sql
 ```
 
-Legacy dashboard views remain only until active imports and tests no longer need them.
+The legacy dashboard views have been removed. The `view` package now contains only the three active classes.
 
 ## Current state
 
@@ -74,6 +74,8 @@ Working UI structure:
 - Police alone can add a creation panel.
 - `newCasePanel` prevents duplicate unsaved forms.
 - Victim and accused cards are read-only.
+- Successful create/update calls replace the affected panel's `CaseRecord` and rebuild that panel.
+- `CaseFrame` is constructed and shown before `LoginFrame` is disposed.
 
 Incomplete backend:
 
@@ -84,7 +86,9 @@ Incomplete backend:
 - Controllers are not initialized with `DatabaseUtility`.
 - The SQL schema contains unused FIR/evidence functionality.
 - `Main` does not initialize the database/backend.
-- UI writes do not refresh case cards or display specific backend failures.
+- Save-listener failures are not caught inside `CasePanel`.
+- Login remains disabled after an authentication failure.
+- Null or unsupported users produce an empty `CaseFrame` instead of a clear error.
 - `UserTest` is empty, and the UI workflow still needs a manual acceptance checklist.
 - `DBTest` currently targets and drops `PoliceDB`, so it is unsafe for valuable data.
 
@@ -171,14 +175,14 @@ Exit condition: police writes are validated, authorized, persisted, and testable
 
 1. Initialize the database and all Controllers in `Main`.
 2. Start Swing with `SwingUtilities.invokeLater(...)`.
-3. Construct `CaseFrame` before disposing Login.
-4. Catch Controller failures in Login, case loading, and Save listeners.
-5. Add `CaseFrame.refreshCases()` using the existing typed dispatch.
-6. Refresh after successful create/update.
-7. Clear `newCasePanel` after a successful creation.
-8. Keep victim/accused fields locked and Save hidden.
-9. Manually verify all role paths and repeated Create clicks.
-10. Remove legacy dashboard views after references disappear.
+3. Preserve the existing order that constructs/shows `CaseFrame` before disposing Login.
+4. Re-enable Login after a failed authentication attempt.
+5. Catch case-loading and Save-listener failures and show short messages.
+6. Reject null or unsupported user types in `CaseFrame`.
+7. Keep the current self-update design: store the returned `CaseRecord` and rebuild only the affected `CasePanel`.
+8. Keep victim/accused fields locked and Save disabled.
+9. Optionally place the description area in a vertical scroll pane and enable word wrapping.
+10. Manually verify all role paths and repeated Create clicks.
 
 Exit condition: all allowed actions work through the current three-view workflow.
 
@@ -209,7 +213,7 @@ Exit condition: all allowed actions work through the current three-view workflow
 - Police view all cases; victim and accused views are properly filtered.
 - Case cards display real stored values.
 - Police can create/update; other roles cannot write.
-- Successful writes refresh the list without duplicate forms.
+- Successful writes rebuild the affected panel without reloading the complete case list or producing duplicate forms.
 - The schema contains only workflow-required user/case data.
 - Database setup is repeatable and tests cannot affect `PoliceDB`.
 - Models contain no JDBC/Swing code, Controllers contain no Swing code, and Views contain no SQL.

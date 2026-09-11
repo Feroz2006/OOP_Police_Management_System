@@ -10,7 +10,7 @@ The current UI workflow is authoritative:
 Main -> LoginFrame -> CaseFrame -> CasePanel
 ```
 
-`HomeFrame`, `PolicePanel`, `VictimPanel`, and `AccusedPanel` are legacy views. New work must not depend on them, and they may be removed after the active workflow and tests compile without them.
+The `view` package now contains only `LoginFrame`, `CaseFrame`, and `CasePanel`. The legacy dashboard views have been removed.
 
 Cases are the only managed records in this workflow:
 
@@ -135,8 +135,8 @@ Member 2 owns `PoliceController` and all police-only case operations.
 |---|---|
 | `public static void initialize(DatabaseUtility utility)` | Store Member 5’s initialized database utility |
 | `public static List<CaseRecord> getCases(Police police) throws AuthorizationException, DatabaseException` | Verify the current police session and return every case ordered by case ID |
-| `public static void createCase(String caseId, String description, String victimUsername, String accusedUsername) throws AuthorizationException, ValidationException, DatabaseException` | Obtain the current police from `LoginController`, validate input, and insert an `OPEN` case |
-| `public static void updateCase(Person currentUser, String caseId, String description, String status) throws AuthorizationException, ValidationException, EntityNotFoundException, DatabaseException` | Verify the current police session and update description/status |
+| `public static CaseRecord createCase(String caseId, String description, String victimUsername, String accusedUsername) throws AuthorizationException, ValidationException, DatabaseException` | Obtain the current police, insert an `OPEN` case, and return its saved record |
+| `public static CaseRecord updateCase(Person currentUser, String caseId, String description, String status) throws AuthorizationException, ValidationException, EntityNotFoundException, DatabaseException` | Verify the current police session, update the case, and return its saved record |
 
 The current empty list and console output are placeholders.
 
@@ -331,11 +331,10 @@ Member 6 owns `Main`, `LoginFrame`, `CaseFrame`, `CasePanel`, UI navigation, and
 | `public LoginFrame()` | Build the login window |
 | `private void initializeComponents()` | Create credential inputs and Login button |
 | `private void initializeListeners()` | Connect Login to `login()` |
-| `private void initializeLayout()` | Build the padded grid |
+| `private void initializeLayout()` | Build the current nine-row padded `GridLayout` |
 | `private void login()` | Call `LoginController.login(...)`, construct `CaseFrame(user)`, then dispose Login and show CaseFrame |
-| `private void clearFields()` | Clear inputs and re-enable Login |
 
-Invalid credentials show the existing warning. Other application errors show a short message. Do not dispose Login until `CaseFrame` is successfully constructed.
+The frame currently uses a fixed `500 x 400` size and is non-resizable. Invalid credentials show the existing warning, and other exceptions show their message. `CaseFrame` is constructed and shown before Login is disposed.
 
 ### CaseFrame
 
@@ -345,15 +344,14 @@ Invalid credentials show the existing warning. Other application errors show a s
 | `caseList` | `JPanel` | Vertically contain case cards |
 | `scrollPane` | `JScrollPane` | Scroll the list |
 | `createCaseButton` | `JButton` | Be visible and active only for police |
-| `newCasePanel` | `CasePanel` | Track one unsaved form |
+| `newCasePanel` | `CasePanel` | Reference the most recently added creation panel |
 
 | Function header | Requirement |
 |---|---|
-| `CaseFrame(Person currentUser)` | Reject null/unknown user types and build the frame |
+| `CaseFrame(Person currentUser)` | Store the supplied user and build the frame |
 | `private void initializeComponents()` | Create list, scroll pane, and Create button |
-| `private void initializeListeners()` | Add no more than one police creation form |
+| `private void initializeListeners()` | Block another form only while `newCasePanel.creatingCase` is true |
 | `private void initializeLayout()` | Call exactly one matching role Controller and add one `CasePanel` per returned case |
-| `private void refreshCases()` | Reload cases, rebuild the list, and call `revalidate()`/`repaint()` |
 
 Required dispatch inside case loading:
 
@@ -363,7 +361,7 @@ VictimController.getCases((Victim) currentUser)
 AccusedController.getCases((Accused) currentUser)
 ```
 
-Only the matching call executes. Controller exceptions are caught and displayed by the view.
+Only the matching call executes. The frame uses a fixed `800 x 600` size and is non-resizable.
 
 ### CasePanel
 
@@ -371,6 +369,7 @@ Only the matching call executes. Controller exceptions are caught and displayed 
 |---|---|
 | `CasePanel(Person currentUser, CaseRecord caseRecord)` | Display an existing case; police can update it |
 | `CasePanel(Police currentUser)` | Display a blank creation form with status `OPEN` |
+| `private void updateUIState()` | Remove and rebuild this panel from its current state |
 | `private void initializeComponents()` | Read all six `CaseRecord` getters or create blank inputs |
 | `private void initializeListeners()` | Call police create/update or enforce read-only access |
 | `private void initializeLayout()` | Arrange the seven label/value rows |
@@ -378,7 +377,7 @@ Only the matching call executes. Controller exceptions are caught and displayed 
 Creation calls:
 
 ```java
-PoliceController.createCase(
+caseRecord = PoliceController.createCase(
     id.getText(),
     description.getText(),
     victimName.getText(),
@@ -388,33 +387,37 @@ PoliceController.createCase(
 Update calls:
 
 ```java
-PoliceController.updateCase(
+caseRecord = PoliceController.updateCase(
     currentUser,
     caseRecord.getCaseId(),
     description.getText(),
     status.getText());
 ```
 
-Victim and accused panels hide Save and lock status and description. Case ID and linked usernames are never editable after creation. Successful writes refresh `CaseFrame`; successful creation clears `newCasePanel` so a later case can be created.
+Victim and accused panels disable Save and lock status and description. Case ID and linked usernames are never editable after creation. A successful write returns a `CaseRecord`; `CasePanel` stores it and rebuilds itself with `updateUIState()`. `CaseFrame` does not reload the complete list. After creation, `creatingCase` becomes false, allowing the next Create click to replace the `newCasePanel` reference.
 
 ### Main
 
-`public static void main(String[] args)` must:
-
-1. Initialize the database.
-2. Construct one `DatabaseUtility`.
-3. Initialize all four Controllers with that same utility.
-4. Display `LoginFrame` through `SwingUtilities.invokeLater(...)`.
-5. Show one short startup error if initialization fails.
+The current `public static void main(String[] args)` directly constructs and displays `LoginFrame`. Database/Controller initialization and `SwingUtilities.invokeLater(...)` remain integration work.
 
 ### Member 6 completion checks
 
 - All three roles follow `LoginFrame -> CaseFrame -> CasePanel`.
-- Police alone see Create and Save controls.
+- Police alone see Create; other roles see a disabled Save button.
 - Repeated Create clicks do not create multiple unsaved forms.
-- A case list refreshes after successful writes.
-- Views catch Controller failures without exposing SQL details.
-- A manual checklist covers dispatch, visibility, editing, refresh, error dialogs, and duplicate-form behavior.
+- The saved `CasePanel` rebuilds from the `CaseRecord` returned by its Controller.
+- A manual checklist covers dispatch, visibility, editing, panel rebuilding, error dialogs, and duplicate-form behavior.
+
+### Current view inconsistencies and remaining issues
+
+- `LoginFrame` disables Login before attempting authentication but does not re-enable it after a failed attempt.
+- A comment in `LoginFrame` still says `HomeFrame`, although the code correctly opens `CaseFrame`.
+- `CaseFrame` silently displays an empty frame for a null or unsupported `Person` subtype instead of rejecting it.
+- Initial case-loading exceptions are caught only by `LoginFrame` because they occur during `CaseFrame` construction.
+- Save-listener exceptions in `CasePanel` are not caught and would escape on the Swing event-dispatch thread.
+- `Main` does not initialize the database or Controllers and does not start Swing through `SwingUtilities.invokeLater(...)`.
+- `JTextArea` enables line wrapping but has no scroll pane or word-boundary wrapping.
+- The fixed frame sizes and `setResizable(false)` behavior are functional but not dynamic.
 
 ## 8. Integration requirements
 
@@ -433,7 +436,7 @@ Victim and accused panels hide Save and lock status and description. Case ID and
 - Each returned case appears once with all six correct values.
 - Police can create and update cases; other roles cannot mutate them.
 - Repeated Create clicks produce only one unsaved form.
-- Successful writes refresh the list.
+- Successful writes rebuild the affected `CasePanel` from the returned record without reloading the complete list.
 - Models contain no JDBC/Swing code, Controllers contain no Swing code, and Views contain no SQL.
 - SQL uses prepared parameters and JDBC resources close safely.
 - Backend failures use the defined application exceptions.
