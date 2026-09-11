@@ -8,7 +8,7 @@ public class LoginController {
     private static Person loggedinUser;
 
     public static Person login(String username, String password) throws AuthenticationException {
-        loggedinUser = new Police("Placeholder ID", "Placeholder Name", 0, "Placeholder Phone No:", "", "", "Placeholder Rank", "Placeholder Dept.", "Placeholder Badge No:" );
+        loggedinUser = new Police("Placeholder ID", "Placeholder Name", 0, "Placeholder Phone No:", username, password, "Placeholder Rank", "Placeholder Dept.", "Placeholder Badge No:" );
         return  loggedinUser;
     }
 

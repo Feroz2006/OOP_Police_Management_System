@@ -15,10 +15,10 @@ public class CaseFrame extends JFrame {
     JButton createCaseButton;
     CasePanel newCasePanel;
 
-    CaseFrame(Person currentUser) {
+    CaseFrame() {
         super("Home");
 
-        this.currentUser = currentUser;
+        this.currentUser = LoginController.getCurrentUser();
 
         // X button makes the window close
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -48,7 +48,7 @@ public class CaseFrame extends JFrame {
                 if (newCasePanel != null && newCasePanel.creatingCase)
                     return;
 
-                newCasePanel = new CasePanel((Police) currentUser);
+                newCasePanel = new CasePanel();
                 caseList.add(newCasePanel);
 
                 // Revalidate recalculates the Layout if components have changes size, position or layout
@@ -74,7 +74,7 @@ public class CaseFrame extends JFrame {
         }
 
         for (CaseRecord caseRecord : cases)
-            caseList.add(new CasePanel(currentUser, caseRecord));
+            caseList.add(new CasePanel(caseRecord));
 
         add(scrollPane, BorderLayout.CENTER);
         setSize(800, 600);

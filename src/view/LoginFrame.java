@@ -74,10 +74,10 @@ public class LoginFrame extends JFrame {
 
         try {
             // login should be a static method
-            Person user = LoginController.login(username, password);
+            LoginController.login(username, password);
             
             // Switch to HomeFrame with user details
-            CaseFrame caseFrame = new CaseFrame(user);
+            CaseFrame caseFrame = new CaseFrame();
             caseFrame.setVisible(true);
             
             // dispose deletes the Frame

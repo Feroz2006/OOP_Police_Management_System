@@ -4,6 +4,7 @@ import java.awt.GridLayout;
 
 import javax.swing.*;
 
+import controller.LoginController;
 import controller.PoliceController;
 import model.CaseRecord;
 import model.Person;
@@ -22,9 +23,9 @@ public class CasePanel extends JPanel {
     JTextField accusedName;
     JButton saveButton;
 
-    CasePanel(Person currentUser, CaseRecord caseRecord) {
+    CasePanel(CaseRecord caseRecord) {
         super();
-        this.currentUser = currentUser;
+        this.currentUser = LoginController.getCurrentUser();
         this.caseRecord = caseRecord;
         this.creatingCase = false;
 
@@ -33,7 +34,17 @@ public class CasePanel extends JPanel {
             this.readOnly = false;
         else
             this.readOnly = true;
+        updateUIState();
+    }
 
+
+    // This constructor is called to Create new CaseRecords in the UI
+    CasePanel() {
+        super();
+        this.currentUser = LoginController.getCurrentUser();
+        this.caseRecord = null;
+        this.creatingCase = true;
+        this.readOnly = false;
 
         updateUIState();
     }
@@ -52,17 +63,6 @@ public class CasePanel extends JPanel {
 
         // Draws the components again on the screen
         this.repaint();
-    }
-
-    // This constructor is called to Create new CaseRecords in the UI
-    CasePanel(Police currentUser) {
-        super();
-        this.currentUser = currentUser;
-        this.caseRecord = null;
-        this.creatingCase = true;
-        this.readOnly = false;
-
-        updateUIState();
     }
 
     private void initializeComponents() {
