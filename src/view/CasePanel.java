@@ -139,13 +139,13 @@ public class CasePanel extends JPanel {
     }
 
     private void createCase() {
-        this.caseRecord = PoliceController.createCase(id.getText(), description.getText(), victimName.getText(), accusedName.getText());
+        this.caseRecord = PoliceController.createCase(id.getText(), description.getText(), victimName.getText(), accusedName.getText(), officerName.getText());
         this.creatingCase = false;
         updateUIState();
     }
 
     private void updateCase() {
-        this.caseRecord = PoliceController.updateCase(currentUser, caseRecord.getCaseId(), description.getText(), status.getText());
+        this.caseRecord = PoliceController.updateCase(this.caseRecord, description.getText(), status.getText());
         updateUIState();
     }
 }
