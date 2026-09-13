@@ -3,7 +3,6 @@ package view;
 import javax.swing.*;
 import java.awt.*;
 
-import model.Person;
 import controller.LoginController;
 import exceptions.AuthenticationException;
 
