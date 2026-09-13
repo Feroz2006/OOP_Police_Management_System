@@ -42,6 +42,7 @@ public class CaseRecord {
         return description;
     }
 
+    // Should return one of {"OPEN", "CLOSED"}
     public String getStatus() {
         return status;
     }

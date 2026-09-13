@@ -61,7 +61,6 @@ public class CaseFrame extends JFrame {
     }
 
     private void createCase() {
-
         // if a new case is already being created, do nothing
         if (newCasePanel != null && newCasePanel.creatingCase)
             return;

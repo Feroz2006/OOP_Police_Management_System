@@ -18,7 +18,7 @@ public class CasePanel extends JPanel {
     CaseRecord caseRecord;
     JTextField id;
     JTextArea description;
-    JTextField status;
+    JComboBox<String> status;
     JLabel officerName;
     JTextField victimName;
     JTextField accusedName;
@@ -38,7 +38,6 @@ public class CasePanel extends JPanel {
             this.readOnly = true;
         updateUIState();
     }
-
 
     // This constructor is called to Create new CaseRecords in the UI
     CasePanel() {
@@ -60,7 +59,8 @@ public class CasePanel extends JPanel {
         initializeListeners();
         initializeLayout();
 
-        // Revalidate recalculates the Layout if components have changes size, position or layout
+        // Revalidate recalculates the Layout if components have changes size, position
+        // or layout
         this.revalidate();
 
         // Draws the components again on the screen
@@ -70,27 +70,35 @@ public class CasePanel extends JPanel {
     private void initializeComponents() {
         // Default values to be displayed when creating a new case
         String idText = "";
-        String statusText = "OPEN";
         String officerText = currentUser.getUsername();
         String victimText = "";
         String accusedText = "";
         String descriptionText = "";
 
+        // ComboBox is an option selection menu, when creating a case it is set to OPEN
+        String[] statusOptions = { "OPEN", "CLOSED" };
+        status = new JComboBox<>(statusOptions);
+        // Sets default selected option
+        status.setSelectedItem("OPEN");
+        // Use (String) status.getSelectedItem() to get the selected option
+
         // Changing default values if cases are to be viewed not created
         if (!creatingCase) {
             idText = caseRecord.getCaseId();
-            statusText = caseRecord.getStatus();
             officerText = caseRecord.getOfficerUsername();
             victimText = caseRecord.getVictimUsername();
             accusedText = caseRecord.getAccusedUsername();
             descriptionText = caseRecord.getDescription();
+
+            // Sets selected option to current case status
+            status.setSelectedItem(caseRecord.getStatus());
         }
+
 
         // Initializing Components
         saveButton = new JButton("Save");
         deleteButton = new JButton("Delete");
         id = new JTextField(idText);
-        status = new JTextField(statusText);
         officerName = new JLabel(officerText, SwingConstants.LEFT);
         victimName = new JTextField(victimText);
         accusedName = new JTextField(accusedText);
@@ -101,7 +109,7 @@ public class CasePanel extends JPanel {
 
         // Setting Editable state
         id.setEditable(creatingCase);
-        status.setEditable(!(creatingCase || readOnly));
+        status.setEnabled(!(creatingCase || readOnly));
         victimName.setEditable(creatingCase);
         accusedName.setEditable(creatingCase);
     }
@@ -110,7 +118,6 @@ public class CasePanel extends JPanel {
         if (readOnly) {
             saveButton.setEnabled(false);
             deleteButton.setEnabled(false);
-            status.setEditable(false);
             description.setEditable(false);
             return;
         }
@@ -120,7 +127,7 @@ public class CasePanel extends JPanel {
             deleteButton.setEnabled(false);
             return;
         }
-
+        
         saveButton.addActionListener(e -> updateCase());
         deleteButton.addActionListener(e -> deleteCase());
     }
@@ -145,13 +152,14 @@ public class CasePanel extends JPanel {
     }
 
     private void createCase() {
-        this.caseRecord = PoliceController.createCase(id.getText(), description.getText(), victimName.getText(), accusedName.getText(), officerName.getText());
+        this.caseRecord = PoliceController.createCase(id.getText(), description.getText(), victimName.getText(),
+                accusedName.getText(), officerName.getText());
         this.creatingCase = false;
         updateUIState();
     }
 
     private void updateCase() {
-        this.caseRecord = PoliceController.updateCase(this.caseRecord, description.getText(), status.getText());
+        this.caseRecord = PoliceController.updateCase(this.caseRecord, description.getText(), (String) status.getSelectedItem());
         updateUIState();
     }
 
