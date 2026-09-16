@@ -3,6 +3,7 @@ package controller;
 import java.util.List;
 
 import model.*;
+import database.DatabaseUtility;
 
 public class PoliceController {
     public static List<CaseRecord> getCases(Police police) {
@@ -17,6 +18,14 @@ public class PoliceController {
         System.out.println("Accused Username: " + accusedUsername);
 
         // App Model Call here to create a new record in the database
+        DatabaseUtility dbUtility = new DatabaseUtility();
+        try {
+            // Table schema needs updation.
+            //dbUtility.executeUpdate("INSERT INTO `CASE` (case_id, description, status, officer_username, victim_username, accused_username) VALUES (?, ?, ?, ?, ?, ?)",
+            //    caseId, description, "OPEN", officerUsername, victimUsername, accusedUsername);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return new CaseRecord(caseId, description, "OPEN", officerUsername, victimUsername, accusedUsername);
     }
 
