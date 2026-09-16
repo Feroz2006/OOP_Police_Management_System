@@ -89,12 +89,12 @@ CREATE TABLE IF NOT EXISTS EVIDENCE (
 
 -- PERSON records
 INSERT INTO PERSON (person_id, name, age, phone, username, password, role) VALUES
-('P001', 'Officer Rajesh Kumar', 35, '9876543210', 'rajesh', 'password123', 'POLICE'),
-('P002', 'Officer Priya Singh', 28, '9876543211', 'priya', 'password123', 'POLICE'),
-('P003', 'Amit Sharma', 42, '9876543212', 'amit', 'password123', 'VICTIM'),
-('P004', 'Neha Gupta', 31, '9876543213', 'neha', 'password123', 'VICTIM'),
-('P005', 'Ravi Verma', 38, '9876543214', 'ravi', 'password123', 'ACCUSED'),
-('P006', 'Suresh Patel', 45, '9876543215', 'suresh', 'password123', 'ACCUSED');
+('P001', 'Officer Rajesh', 35, '9876543210', 'rajesh', 'password123', 'POLICE'),
+('P002', 'Officer Priya', 28, '9876543211', 'priya', 'password123', 'POLICE'),
+('P003', 'Amit', 42, '9876543212', 'amit', 'password123', 'VICTIM'),
+('P004', 'Neha', 31, '9876543213', 'neha', 'password123', 'VICTIM'),
+('P005', 'Raja Ravi Verma', 38, '9876543214', 'ravi', 'password123', 'ACCUSED'),
+('P006', 'Suresh', 45, '9876543215', 'suresh', 'password123', 'ACCUSED');
 
 -- POLICE records
 INSERT INTO POLICE (person_id, `rank`, department, badge_number) VALUES
@@ -103,8 +103,8 @@ INSERT INTO POLICE (person_id, `rank`, department, badge_number) VALUES
 
 -- VICTIM records
 INSERT INTO VICTIM (person_id, crime_details, emergency_contact) VALUES
-('P003', 'House burglary on 15th March 2024', '9876543220'),
-('P004', 'Vehicle theft on 20th March 2024', '9876543221');
+('P003', 'House burglary on 15th Sept 2026', '9876543220'),
+('P004', 'Vehicle theft on 10th Sept 2026', '9876543221');
 
 -- ACCUSED records
 INSERT INTO ACCUSED (person_id, charges, bail_status) VALUES
@@ -113,7 +113,7 @@ INSERT INTO ACCUSED (person_id, charges, bail_status) VALUES
 
 -- CASE records
 INSERT INTO `CASE` (case_id, status, description, officer_username, victim_username, accused_username) VALUES
-('CASE001', 'OPEN', 'Burglary at residential apartment in Andheri West', 'rajesh', 'amit', 'ravi'),
+('CASE001', 'OPEN', 'Burglary at residential apartment', 'rajesh', 'amit', 'ravi'),
 ('CASE002', 'CLOSED', 'Theft of white sedan from parking lot', 'priya', 'neha', 'suresh'),
 ('CASE003', 'OPEN', 'Attempted robbery at jewelry shop', 'rajesh', 'amit', 'suresh');
 
@@ -131,13 +131,13 @@ INSERT INTO CASE_ACCUSED (case_id, accused_id) VALUES
 
 -- EVIDENCE records
 INSERT INTO EVIDENCE (evidence_id, case_id, description, type, collected_date, collected_by, location) VALUES
-('EVD001', 'CASE001', 'Fingerprints from broken window', 'PHYSICAL', '2024-03-16', 'P001', 'Crime Scene - Andheri West'),
+('EVD001', 'CASE001', 'Fingerprints from broken window', 'PHYSICAL', '2024-03-16', 'P001', 'Crime Scene'),
 ('EVD002', 'CASE001', 'CCTV footage from nearby shop', 'VIDEO', '2024-03-16', 'P001', 'Nearby Electronics Store'),
 ('EVD003', 'CASE002', 'Parking lot security footage', 'VIDEO', '2024-03-21', 'P002', 'Residential Parking Area'),
 ('EVD004', 'CASE003', 'Witness statement document', 'DOCUMENT', '2024-03-25', 'P001', 'Jewelry Shop');
 
 -- FIR records
 INSERT INTO FIR (fir_id, date, location, description, victim_id, registered_by) VALUES
-('FIR001', '2024-03-15', 'Andheri West, Mumbai', 'House burglary reported by Amit Sharma', 'P003', 'P001'),
-('FIR002', '2024-03-20', 'Bandra East, Mumbai', 'Vehicle theft reported by Neha Gupta', 'P004', 'P002'),
-('FIR003', '2024-03-24', 'Borivali West, Mumbai', 'Attempted robbery at jewelry shop', 'P003', 'P001');
+('FIR001', '2024-03-15', 'Kozhikode, Kerala', 'House burglary reported by Amit', 'P003', 'P001'),
+('FIR002', '2024-03-20', 'Kollam, Kerala', 'Vehicle theft reported by Neha', 'P004', 'P002'),
+('FIR003', '2024-03-24', 'Thiruvananthapuram, Kerala', 'Attempted robbery at jewelry shop', 'P003', 'P001');

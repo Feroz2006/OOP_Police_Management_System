@@ -66,3 +66,17 @@ On Windows, use `;` instead of `:` in the classpath:
 ```powershell
 java -cp "out;lib/mysql-connector-j-26.7.0.jar" Main
 ```
+
+## Dummy values
+
+For tractibility, we have decided to initialize the database with dummy users and cases.  
+Currently, you can add cases, but due to scale of the project, we have decided not to implement signup.  
+The following users are present:
+| Username | Password | Role |
+|----------|----------|------|
+| rajesh | password123 | Police |
+| priya | password123 | Police |
+| amit | password123 | Victim |
+| neha | password123 | Victim |
+| ravi | password123 | Accused |
+| suresh | password123 | Accused |
