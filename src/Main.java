@@ -8,7 +8,6 @@ public class Main {
         new DatabaseInitializer().initializeDatabase(); // Initializes the database
         JFrame loginFrame = new LoginFrame();
         loginFrame.setVisible(true); // Makes window visible
-        new DatabaseInitializer().dropTables(); // Resets the database by dropping existing tables
     }
     
 }
