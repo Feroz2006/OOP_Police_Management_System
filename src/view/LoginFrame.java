@@ -3,8 +3,8 @@ package view;
 import javax.swing.*;
 import java.awt.*;
 
-import controller.LoginController;
 import exceptions.AuthenticationException;
+import controller.LoginController;
 
 public class LoginFrame extends JFrame {
 
@@ -14,19 +14,19 @@ public class LoginFrame extends JFrame {
     private JPasswordField passField; // To accept password
     private JLabel passLabel;
 
-    private JButton loginButton;  // To submit form
+    private JButton loginButton; // To submit form
 
     public LoginFrame() {
         super("Login");
 
         // X button makes the window close
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); 
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         // Setting window size
         setSize(500, 400);
 
         // Centers window on screen
-        setLocationRelativeTo(null); 
+        setLocationRelativeTo(null);
 
         // Prevents user from resizing the window
         setResizable(false);
@@ -74,16 +74,17 @@ public class LoginFrame extends JFrame {
         try {
             // login should be a static method
             LoginController.login(username, password);
-            
+
             // Switch to HomeFrame with user details
             CaseFrame caseFrame = new CaseFrame();
             caseFrame.setVisible(true);
-            
+
             // dispose deletes the Frame
             dispose();
         } catch (AuthenticationException e) {
-            JOptionPane.showMessageDialog(null, "Invalid username or password", "Invalid Credentials", JOptionPane.WARNING_MESSAGE);
-        } catch(Exception e) {
+            JOptionPane.showMessageDialog(null, "Invalid username or password", "Invalid Credentials",
+                    JOptionPane.WARNING_MESSAGE);
+        } catch (Exception e) {
             JOptionPane.showMessageDialog(null, e.getMessage(), "Error", JOptionPane.WARNING_MESSAGE);
         }
     }
