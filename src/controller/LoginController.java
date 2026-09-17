@@ -1,7 +1,6 @@
 package controller;
 
 import exceptions.AuthenticationException;
-import exceptions.ValidationException;
 import exceptions.DatabaseException;
 
 import database.DatabaseUtility;
@@ -18,10 +17,11 @@ public class LoginController {
     private static Person loggedinUser;
     private static DatabaseUtility databaseutility;
 
-    public static Person login(String username, String password) throws AuthenticationException {
+    public static Person login(String username, String password) throws AuthenticationException, DatabaseException {
+        loggedinUser = null;
         if (username == null || username.isBlank() ||
             password == null || password.isBlank()){
-                throw new ValidationException("Username and password cannot be blank.");
+                throw new AuthenticationException("Invalid Username or password..", username);
             }
 
         if (databaseutility == null){
@@ -78,7 +78,7 @@ public class LoginController {
 
         }
         catch (SQLException e){
-            throw new DatabaseException("Database error during login.");
+            throw new DatabaseException("Database error during login.", e);
         }
     }
         
