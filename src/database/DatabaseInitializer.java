@@ -23,14 +23,10 @@ public class DatabaseInitializer {
     }
 
     public void initializeDatabase() {
-        executeSqlScript();
+        executeInitSqlScript();
     }
 
-    public void createTables() {
-        executeSqlScript();
-    }
-
-    private void executeSqlScript() {
+    private void executeInitSqlScript() {
         if (!dbConnectionClass.isConnected()) {
             throw new DatabaseException("Database connection is not established.",
                     new SQLException("Database connection is not established."));
