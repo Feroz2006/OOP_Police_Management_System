@@ -36,6 +36,20 @@ and save it as:
 ```text
 lib/mysql-connector-j-26.7.0.jar
 ```
+## Verification of MySQL environment
+Verify MySQL connection in the project folder before compiling.
+```bash
+mysql -u root -p
+```
+or force the the mysql.exe using {If not added to PATH}
+```bash
+& "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p
+```
+//Use your version of MySQL inside MySQL folder
+This opens up the MySQL environment for verification. Use simple commands like
+``` bash
+SHOW DATABASES;
+```
 
 ## Compile
 
@@ -43,6 +57,7 @@ From the project root, compile all Java sources into `out/`:
 
 ```bash
 mkdir -p out
+mysql -u root -p
 javac -cp "lib/mysql-connector-j-26.7.0.jar" -d out $(find src -name '*.java')
 ```
 
@@ -71,6 +86,7 @@ java -cp "out;lib/mysql-connector-j-26.7.0.jar" Main
 
 For tractibility, we have decided to initialize the database with dummy users and cases.  
 Currently, you can add cases, but due to scale of the project, we have decided not to implement signup.  
+
 The following users are present:
 | Username | Password | Role |
 |----------|----------|------|
