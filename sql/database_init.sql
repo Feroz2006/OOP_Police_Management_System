@@ -1,5 +1,4 @@
-DROP DATABASE IF EXISTS PoliceDB;
-CREATE DATABASE PoliceDB;
+CREATE DATABASE IF NOT EXISTS PoliceDB;
 USE PoliceDB;
 
 CREATE TABLE IF NOT EXISTS PERSON (
@@ -88,7 +87,7 @@ CREATE TABLE IF NOT EXISTS EVIDENCE (
 -- Test Data
 
 -- PERSON records
-INSERT INTO PERSON (person_id, name, age, phone, username, password, role) VALUES
+INSERT IGNORE INTO PERSON (person_id, name, age, phone, username, password, role) VALUES
 ('P001', 'Officer Rajesh', 35, '9876543210', 'rajesh', 'password123', 'POLICE'),
 ('P002', 'Officer Priya', 28, '9876543211', 'priya', 'password123', 'POLICE'),
 ('P003', 'Amit', 42, '9876543212', 'amit', 'password123', 'VICTIM'),
@@ -97,47 +96,47 @@ INSERT INTO PERSON (person_id, name, age, phone, username, password, role) VALUE
 ('P006', 'Suresh', 45, '9876543215', 'suresh', 'password123', 'ACCUSED');
 
 -- POLICE records
-INSERT INTO POLICE (person_id, `rank`, department, badge_number) VALUES
+INSERT IGNORE INTO POLICE (person_id, `rank`, department, badge_number) VALUES
 ('P001', 'Inspector', 'Criminal Investigation Department', 'BADGE001'),
 ('P002', 'Sub-Inspector', 'Local Police Station', 'BADGE002');
 
 -- VICTIM records
-INSERT INTO VICTIM (person_id, crime_details, emergency_contact) VALUES
+INSERT IGNORE INTO VICTIM (person_id, crime_details, emergency_contact) VALUES
 ('P003', 'House burglary on 15th Sept 2026', '9876543220'),
 ('P004', 'Vehicle theft on 10th Sept 2026', '9876543221');
 
 -- ACCUSED records
-INSERT INTO ACCUSED (person_id, charges, bail_status) VALUES
+INSERT IGNORE INTO ACCUSED (person_id, charges, bail_status) VALUES
 ('P005', 'Theft and burglary', FALSE),
 ('P006', 'Vehicle theft and fraud', TRUE);
 
 -- CASE records
-INSERT INTO `CASE` (case_id, status, description, officer_username, victim_username, accused_username) VALUES
+INSERT IGNORE INTO `CASE` (case_id, status, description, officer_username, victim_username, accused_username) VALUES
 ('CASE001', 'OPEN', 'Burglary at residential apartment', 'rajesh', 'amit', 'ravi'),
 ('CASE002', 'CLOSED', 'Theft of white sedan from parking lot', 'priya', 'neha', 'suresh'),
 ('CASE003', 'OPEN', 'Attempted robbery at jewelry shop', 'rajesh', 'amit', 'suresh');
 
 -- CASE_OFFICER records
-INSERT INTO CASE_OFFICER (case_id, officer_id) VALUES
+INSERT IGNORE INTO CASE_OFFICER (case_id, officer_id) VALUES
 ('CASE001', 'P001'),
 ('CASE002', 'P002'),
 ('CASE003', 'P001');
 
 -- CASE_ACCUSED records
-INSERT INTO CASE_ACCUSED (case_id, accused_id) VALUES
+INSERT IGNORE INTO CASE_ACCUSED (case_id, accused_id) VALUES
 ('CASE001', 'P005'),
 ('CASE002', 'P006'),
 ('CASE003', 'P006');
 
 -- EVIDENCE records
-INSERT INTO EVIDENCE (evidence_id, case_id, description, type, collected_date, collected_by, location) VALUES
+INSERT IGNORE INTO EVIDENCE (evidence_id, case_id, description, type, collected_date, collected_by, location) VALUES
 ('EVD001', 'CASE001', 'Fingerprints from broken window', 'PHYSICAL', '2024-03-16', 'P001', 'Crime Scene'),
 ('EVD002', 'CASE001', 'CCTV footage from nearby shop', 'VIDEO', '2024-03-16', 'P001', 'Nearby Electronics Store'),
 ('EVD003', 'CASE002', 'Parking lot security footage', 'VIDEO', '2024-03-21', 'P002', 'Residential Parking Area'),
 ('EVD004', 'CASE003', 'Witness statement document', 'DOCUMENT', '2024-03-25', 'P001', 'Jewelry Shop');
 
 -- FIR records
-INSERT INTO FIR (fir_id, date, location, description, victim_id, registered_by) VALUES
+INSERT IGNORE INTO FIR (fir_id, date, location, description, victim_id, registered_by) VALUES
 ('FIR001', '2024-03-15', 'Kozhikode, Kerala', 'House burglary reported by Amit', 'P003', 'P001'),
 ('FIR002', '2024-03-20', 'Kollam, Kerala', 'Vehicle theft reported by Neha', 'P004', 'P002'),
 ('FIR003', '2024-03-24', 'Thiruvananthapuram, Kerala', 'Attempted robbery at jewelry shop', 'P003', 'P001');

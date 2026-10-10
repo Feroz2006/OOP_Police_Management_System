@@ -60,7 +60,7 @@ public class DatabaseInitializer {
         }
 
         try (Statement statement = dbConnection.createStatement();
-             ResultSet resultSet = statement.executeQuery("SELECT DATABASE()")) {
+                ResultSet resultSet = statement.executeQuery("SELECT DATABASE()")) {
             if (!resultSet.next() || !DATABASE_NAME.equals(resultSet.getString(1))) {
                 return;
             }
@@ -68,7 +68,7 @@ public class DatabaseInitializer {
             throw new DatabaseException("Unable to check the active database.", e);
         }
 
-        executeSqlScript(Paths.get("sql", "database_drop.sql"));
+        // executeSqlScript(Paths.get("sql", "database_drop.sql"));
         dbConnectionClass.closeConnection();
     }
 }
