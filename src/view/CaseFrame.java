@@ -24,8 +24,6 @@ public class CaseFrame extends JFrame {
         // X button makes the window close
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // Prevents user from resizing the window
-        setResizable(false);
 
         initializeComponents();
         initializeListeners();

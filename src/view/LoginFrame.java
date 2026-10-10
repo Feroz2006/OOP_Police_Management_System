@@ -28,9 +28,6 @@ public class LoginFrame extends JFrame {
         // Centers window on screen
         setLocationRelativeTo(null);
 
-        // Prevents user from resizing the window
-        setResizable(false);
-
         initializeComponents();
         initializeListeners();
         initializeLayout();
