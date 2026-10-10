@@ -9,6 +9,7 @@ import database.DatabaseUtility;
 import model.*;
 
 public class PoliceController {
+    private PoliceController() {}
     public static List<CaseRecord> getCases(Police police) {
         List<CaseRecord> cases = new ArrayList<>();
         DatabaseUtility dbUtility = new DatabaseUtility();

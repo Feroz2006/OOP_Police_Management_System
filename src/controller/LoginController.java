@@ -10,6 +10,8 @@ import model.*;
 public class LoginController {
     private static Person loggedinUser;
 
+    private LoginController() {}
+
     public static Person login(String username, String password) throws AuthenticationException {
         DatabaseUtility dbUtility = new DatabaseUtility();
         try {

@@ -10,6 +10,7 @@ import model.CaseRecord;
 import model.Victim;
 
 public class VictimController {
+    private VictimController() {}
     public static List<CaseRecord> getCases(Victim victim) {
         List<CaseRecord> cases = new ArrayList<>();
         DatabaseUtility dbUtility = new DatabaseUtility();

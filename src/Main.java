@@ -8,5 +8,5 @@ public class Main {
         JFrame loginFrame = new LoginFrame();
         loginFrame.setVisible(true); // Makes window visible
     }
-    
+
 }

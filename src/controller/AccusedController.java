@@ -10,6 +10,7 @@ import model.Accused;
 import model.CaseRecord;
 
 public class AccusedController {
+    private AccusedController() {}
     public static List<CaseRecord> getCases(Accused accused) {
         List<CaseRecord> cases = new ArrayList<>();
         DatabaseUtility dbUtility = new DatabaseUtility();
