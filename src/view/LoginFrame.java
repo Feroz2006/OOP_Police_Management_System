@@ -65,8 +65,6 @@ public class LoginFrame extends JFrame {
     }
 
     private void login() {
-        // disable login button to prevent it from being spammed
-        loginButton.setEnabled(false);
         String username = userField.getText();
         // getPassword() returns character array
         String password = new String(passField.getPassword());
