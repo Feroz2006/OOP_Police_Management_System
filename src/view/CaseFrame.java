@@ -25,6 +25,10 @@ public class CaseFrame extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 
+        setSize(800, 600);
+        setLocationRelativeTo(null);
+
+
         initializeComponents();
         initializeListeners();
         initializeLayout();
@@ -37,7 +41,7 @@ public class CaseFrame extends JFrame {
         createCaseButton = new JButton("Create Case");
         logoutButton = new JButton("Logout");
         
-        // Create case visible only if user is Police Officer
+        // Create case visible only if user is Police Officer, if not the button is invisible and not added to the frame
         createCaseButton.setVisible(currentUser instanceof Police);
     }
 
@@ -92,7 +96,5 @@ public class CaseFrame extends JFrame {
             caseList.add(new CasePanel(caseRecord));
 
         add(scrollPane, BorderLayout.CENTER);
-        setSize(800, 600);
-        setLocationRelativeTo(null);
     }
 }
