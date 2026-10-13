@@ -94,7 +94,6 @@ public class CasePanel extends JPanel {
             status.setSelectedItem(caseRecord.getStatus());
         }
 
-
         // Initializing Components
         saveButton = new JButton("Save");
         deleteButton = new JButton("Delete");
@@ -127,7 +126,7 @@ public class CasePanel extends JPanel {
             deleteButton.setEnabled(false);
             return;
         }
-        
+
         saveButton.addActionListener(e -> updateCase());
         deleteButton.addActionListener(e -> deleteCase());
     }
@@ -152,18 +151,36 @@ public class CasePanel extends JPanel {
     }
 
     private void createCase() {
-        this.caseRecord = PoliceController.createCase(id.getText(), description.getText(), victimName.getText(),
-                accusedName.getText(), officerName.getText());
-        this.creatingCase = false;
+        if (victimName.getText().equals(currentUser.getUsername()) || accusedName.getText().equals(currentUser.getUsername())) {
+            JOptionPane.showMessageDialog(null, "Officers cannot register themselves as victim/accused",
+                    "Permission Error", JOptionPane.WARNING_MESSAGE);
+            this.creatingCase = true;
+        }
+                
+        else {
+            this.caseRecord = PoliceController.createCase(id.getText(), description.getText(), victimName.getText(),
+                    accusedName.getText(), officerName.getText());
+            this.creatingCase = false;
+        }
         updateUIState();
     }
 
     private void updateCase() {
-        this.caseRecord = PoliceController.updateCase(this.caseRecord, description.getText(), (String) status.getSelectedItem());
+        if (victimName.getText().equals(currentUser.getUsername()) || accusedName.getText().equals(currentUser.getUsername()))
+            JOptionPane.showMessageDialog(null, "Officers cannot update cases where they are the victim/accused",
+                    "Permission Error", JOptionPane.WARNING_MESSAGE);
+        else
+            this.caseRecord = PoliceController.updateCase(this.caseRecord, description.getText(),
+                    (String) status.getSelectedItem());
         updateUIState();
     }
 
     private void deleteCase() {
+        if (victimName.getText().equals(currentUser.getUsername()) || accusedName.getText().equals(currentUser.getUsername())) {
+            JOptionPane.showMessageDialog(null, "Officers cannot delete cases where they are the victim/accused",
+                    "Permission Error", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         PoliceController.deleteCase(this.caseRecord);
 
         // Removing this Component from its Container

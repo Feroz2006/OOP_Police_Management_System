@@ -6,18 +6,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import database.DatabaseUtility;
-import model.Accused;
 import model.CaseRecord;
 
 public class AccusedController {
     private AccusedController() {}
-    public static List<CaseRecord> getCases(Accused accused) {
+    public static List<CaseRecord> getCases(String username) {
         List<CaseRecord> cases = new ArrayList<>();
         DatabaseUtility dbUtility = new DatabaseUtility();
         try {
             ResultSet rs = dbUtility.executeQuery(
                 "SELECT * FROM `CASE` WHERE accused_username = ?",
-                accused.getUsername()
+                username
             );
             while (rs.next()) {
                 cases.add(new CaseRecord(

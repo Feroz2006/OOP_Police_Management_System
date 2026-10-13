@@ -7,17 +7,16 @@ import java.util.List;
 
 import database.DatabaseUtility;
 import model.CaseRecord;
-import model.Victim;
 
 public class VictimController {
     private VictimController() {}
-    public static List<CaseRecord> getCases(Victim victim) {
+    public static List<CaseRecord> getCases(String username) {
         List<CaseRecord> cases = new ArrayList<>();
         DatabaseUtility dbUtility = new DatabaseUtility();
         try {
             ResultSet rs = dbUtility.executeQuery(
                 "SELECT * FROM `CASE` WHERE victim_username = ?",
-                victim.getUsername()
+                username
             );
             while (rs.next()) {
                 cases.add(new CaseRecord(

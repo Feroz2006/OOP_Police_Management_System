@@ -10,13 +10,13 @@ import model.*;
 
 public class PoliceController {
     private PoliceController() {}
-    public static List<CaseRecord> getCases(Police police) {
+    public static List<CaseRecord> getCases(String username) {
         List<CaseRecord> cases = new ArrayList<>();
         DatabaseUtility dbUtility = new DatabaseUtility();
         try {
             ResultSet rs = dbUtility.executeQuery(
                 "SELECT * FROM `CASE` WHERE officer_username = ?",
-                police.getUsername()
+                username
             );
             while (rs.next()) {
                 cases.add(new CaseRecord(

@@ -1,7 +1,7 @@
 package view;
 
 import java.awt.BorderLayout;
-import java.util.List;
+import java.util.ArrayList;
 
 import javax.swing.*;
 
@@ -81,15 +81,16 @@ public class CaseFrame extends JFrame {
 
     private void initializeLayout() {
         setLayout(new BorderLayout(5, 5));
-        List<CaseRecord> cases = List.of();
+        ArrayList<CaseRecord> cases = new ArrayList<>();
         add(logoutButton, BorderLayout.SOUTH);
+
+        String username = currentUser.getUsername();
+        cases.addAll(PoliceController.getCases(username));
+        cases.addAll(VictimController.getCases(username));
+        cases.addAll(AccusedController.getCases(username));
+
         if (currentUser instanceof Police) {
-            cases = PoliceController.getCases((Police) currentUser);
             add(createCaseButton, BorderLayout.NORTH);
-        } else if (currentUser instanceof Victim) {
-            cases = VictimController.getCases((Victim) currentUser);
-        } else if (currentUser instanceof Accused) {
-            cases = AccusedController.getCases((Accused) currentUser);
         }
 
         for (CaseRecord caseRecord : cases)
